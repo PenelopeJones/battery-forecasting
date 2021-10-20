@@ -1,0 +1,36 @@
+
+Input: actions 	Output: Q_n+1 
+Max depth: 10	 N estimators: 25	 N ensembles: 2	Splits:2
+Train R2:0.9391846872069001	 Train error: 0.876987231180279	 Test R2: -0.2373629311466992	 Test error: 20.60037454531651
+
+Input: eis 	Output: Q_n+1 
+Max depth: 10	 N estimators: 25	 N ensembles: 2	Splits:2
+Train R2:0.9580282093914099	 Train error: 0.13477306899884098	 Test R2: -0.8660179900721721	 Test error: 21.635185613693107
+
+Input: eis-actions 	Output: Q_n+1 
+Max depth: 10	 N estimators: 25	 N ensembles: 2	Splits:2
+Train R2:0.9952635960460853	 Train error: 0.05016135335276379	 Test R2: 0.059764752035150526	 Test error: 18.284606194943805
+
+Input: cvfs-actions 	Output: Q_n+1 
+Max depth: 10	 N estimators: 25	 N ensembles: 2	Splits:2
+Train R2:0.9810779999193202	 Train error: 0.08316315272999178	 Test R2: 0.3027909999140395	 Test error: 13.959367407106491
+
+Input: c-actions 	Output: Q_n+1 
+Max depth: 10	 N estimators: 25	 N ensembles: 2	Splits:2
+Train R2:0.9648834063993209	 Train error: 0.3275656122719435	 Test R2: 0.001641604650080175	 Test error: 18.91325689283196
+
+Input: ct-actions 	Output: Q_n+1 
+Max depth: 10	 N estimators: 25	 N ensembles: 2	Splits:2
+Train R2:0.9555931249088454	 Train error: 0.3228262706645831	 Test R2: -0.044653467646848466	 Test error: 19.250265345667078
+
+Input: soh-actions 	Output: Q_n+1 
+Max depth: 10	 N estimators: 25	 N ensembles: 2	Splits:2
+Train R2:0.9642574772803452	 Train error: 0.2815540542089595	 Test R2: 0.0077275861198785045	 Test error: 17.643291823144125
+
+Input: eis-cvfs-ct-c-actions 	Output: Q_n+1 
+Max depth: 10	 N estimators: 25	 N ensembles: 2	Splits:2
+Train R2:0.9941661405898709	 Train error: 0.04942039601131666	 Test R2: 0.33039584084545875	 Test error: 14.048370179400639
+
+Input: eis-cvfs-ct-actions 	Output: Q_n+1 
+Max depth: 10	 N estimators: 25	 N ensembles: 2	Splits:2
+Train R2:0.9947718862330243	 Train error: 0.046407741834992536	 Test R2: 0.1551130029164577	 Test error: 15.834494130146135
