@@ -3,8 +3,12 @@ sys.path.append('../')
 import time
 import pickle
 
+import numpy as np
+from sklearn.metrics import r2_score
+
 from utils.exp_util import extract_data, extract_input
 from utils.models import XGBModel
+
 
 import pdb
 
@@ -30,7 +34,6 @@ for n_cells in n_cells_list:
     experiment_name = '{}_{}cells_xgb'.format(input_name, n_cells)
     experiment_info = '\nInput: {} \tOutput: Q_n+1 \t{} cells \nMax depth: {}\t N estimators: {}\t N ensembles: {}\tSplits:{}\n'.format(input_name, n_cells, params['max_depth'], params['n_estimators'],
     t0 = time.time()
-
     r2s_tr = []
     r2s_te = []
     pes_tr = []
@@ -76,7 +79,6 @@ for n_cells in n_cells_list:
         pes_tr.append(np.abs(y_train - y_pred_tr) / y_train)
         pes_te.append(np.abs(y_test1 - y_pred_te1) / y_test1)
         pes_te.append(np.abs(y_test2 - y_pred_te2) / y_test2)
-
         cell_ids = np.roll(cell_ids, 2)
 
     r2_tr = np.median(np.array(r2s_tr))
