@@ -752,7 +752,7 @@ def extract_n_step_data(experiment, channels):
 
 def ensemble_predict(x, experiment, input_name, n_ensembles=10):
     y_preds = []
-    dts = '../results/{}/'.format(experiment)
+    dts = '../results/{}'.format(experiment)
     for i in range(n_ensembles):
         experiment_name = '{}_n1_xgb'.format(input_name)
         with open('{}/models/{}_{}.pkl'.format(dts, experiment_name, i), 'rb') as f:
