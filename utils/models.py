@@ -118,7 +118,7 @@ class XGBModel:
 
         n_bootstrap = int(0.9*X_train.shape[0]) # fraction of training set to use to train each model in ensemble
         states = self.n_ensembles*np.arange(1, self.n_ensembles + 1, 1) + self.n_split + self.start_seed
-        dts = 'results/{}'.format(self.experiment)
+        dts = '../results/{}'.format(self.experiment)
 
         y_pred_trs = []
         y_pred_te1s = []
@@ -180,7 +180,7 @@ class XGBModel:
             # train model and predict on train and test data
             y_pred_tr, y_pred_tr_err, y_pred_te1, y_pred_te1_err, y_pred_te2, y_pred_te2_err = self.train_and_predict(X_train, y_train, X_test1, X_test2=X_test2)
 
-            dts = 'results/{}'.format(self.experiment)
+            dts = '../results/{}'.format(self.experiment)
             # save test cell predictions
             np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_pred_te1)
             np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_pred_te1_err)
@@ -209,7 +209,7 @@ class XGBModel:
 
         n_bootstrap = int(0.9*X_train.shape[0]) # fraction of training set to use to train each model in ensemble
         states = self.n_ensembles*np.arange(1, self.n_ensembles + 1, 1) + self.n_split + self.start_seed
-        dts = 'results/{}'.format(self.experiment)
+        dts = '../results/{}'.format(self.experiment)
 
         for i, ensemble_state in enumerate(states):
 
