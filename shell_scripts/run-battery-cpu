@@ -59,10 +59,10 @@ module load rhel7/default-peta4            # REQUIRED - loads the basic environm
 source ~/rds/hpc-work/battery-env/bin/activate
 
 #! Full path to application executable:
-CMD="python $script $kwargs"
+application="python $script $kwargs"
 
 #! Run options for the application
-
+options=""
 #! Work directory (i.e. where the job will run):
 workdir="$SLURM_SUBMIT_DIR"  # The value of SLURM_SUBMIT_DIR sets workdir to the directory
                              # in which sbatch is run.
@@ -88,11 +88,11 @@ export I_MPI_PIN_ORDER=scatter # Adjacent domains have minimal sharing of caches
 #! Uncomment one choice for CMD below (add mpirun/mpiexec options if necessary):
 
 #! Choose this for a MPI code (possibly using OpenMP) using Intel MPI.
-CMD="mpirun -ppn $mpi_tasks_per_node -np $np $application $options"
+£CMD="mpirun -ppn $mpi_tasks_per_node -np $np $application $options"
 
 #! Choose this for a pure shared-memory OpenMP parallel program on a single node:
 #! (OMP_NUM_THREADS threads will be created):
-#CMD="$application $options"
+CMD="$application $options"
 
 #! Choose this for a MPI code (possibly using OpenMP) using OpenMPI:
 #CMD="mpirun -npernode $mpi_tasks_per_node -np $np $application $options"
