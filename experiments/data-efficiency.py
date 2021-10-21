@@ -59,10 +59,11 @@ for n_cells in n_cells_list:
         x_test2 = x[idx_test2]
         y_test2 = cap_ds_var[idx_test2]
 
-        regressor = XGBModel(None, None, cell_s, experiment, experiment_name, n_ensembles=params['n_ensembles'],
+        regressor = XGBModel(None, None, cell_ids_s, experiment, experiment_name, n_ensembles=params['n_ensembles'],
                              n_splits=params['n_splits'], max_depth=params['max_depth'],
                              n_estimators=params['n_estimators'])
-        y_pred_tr, y_pred_tr_err, y_pred_te1, y_pred_te1_err, y_pred_te2, y_pred_te2_err, = regressor.train_and_predict(x_train, y_train, x_test1, cell_test1, x_test2, cell_test2)
+        y_pred_tr, y_pred_tr_err, y_pred_te1, y_pred_te1_err, y_pred_te2, y_pred_te2_err, = regressor.train_and_predict(x_train, y_train, x_test1,
+                                                                                                                        cell_test1, x_test2, cell_test2)
 
         dts = '../results/{}'.format(self.experiment)
         # save test cell predictions
@@ -89,5 +90,5 @@ for n_cells in n_cells_list:
     with open(log_name, 'a+') as file:
         file.write(experiment_info)
         file.write('Train R2:{}\t Train error: {}\t Test R2: {}\t Test error: {}\n'.format(r2_tr, pe_tr, r2_te, pe_te))
-
+        file.flush()
 print('Done.')
