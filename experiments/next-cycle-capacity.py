@@ -9,10 +9,10 @@ from utils.models import XGBModel
 import pdb
 
 channels = [1, 2, 3, 4, 5, 6, 7, 8]
-params = {'max_depth':10,
-          'n_splits':2,
-          'n_estimators':25,
-          'n_ensembles':2}
+params = {'max_depth':100,
+          'n_splits':12,
+          'n_estimators':500,
+          'n_ensembles':10}
 experiment = 'variable-discharge'
 log_name = '../results/{}/log-next-cycle.txt'.format(experiment)
 

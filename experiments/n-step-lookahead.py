@@ -3,7 +3,9 @@ sys.path.append('../')
 import time
 import pickle
 
-from utils.exp_util import extract_data, extract_input
+import numpy as np
+
+from utils.exp_util import extract_data, extract_n_step_data, extract_input
 from utils.models import XGBModel
 
 import pdb
