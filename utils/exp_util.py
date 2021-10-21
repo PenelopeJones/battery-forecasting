@@ -749,3 +749,17 @@ def extract_n_step_data(experiment, channels):
     data = (states, actions, cycles, cap_ds)
 
     return data
+
+def ensemble_predict(x, experiment, input_name, n_ensembles=10):
+    y_preds = []
+    dts = '../results/{}/'
+    for i in range(n_ensembles):
+        experiment_name = '{}_n1_xgb'.format(input_name)
+        with open('{}/models/{}_{}.pkl'.format(dts, experiment_name, i), 'rb') as f:
+            regr = pickle.load(f)
+            y_pred = regr.predict(x)
+            y_preds.append(y_pred.reshape(1, y_pred.shape[0], -1))
+    y_preds = np.vstack(y_preds)
+    y_pred = np.mean(y_preds, axis=0)
+    y_pred_err = np.sqrt(np.var(y_preds, axis=0))
+    return y_pred.reshape(-1), y_pred_err.reshape(-1)
