@@ -10,7 +10,7 @@ from utils.exp_util import extract_data, extract_input, ensemble_predict
 import pdb
 
 channels = [1, 2, 3, 4, 5, 6, 7, 8]
-
+input_name = 'eis-actions'
 # Testing on fixed discharge data set
 cell_fixed, cap_ds_fixed, data_fixed = extract_data('fixed-discharge', channels)
 x_fixed = extract_input(input_name, data_fixed)
