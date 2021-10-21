@@ -114,7 +114,7 @@ class XGBModel:
 
         return X_train, y_train, X_test1, y_test1, X_test2, y_test2, cell_test1, cell_test2
 
-    def train_and_predict(self, X_train, y_train, X_test1, X_test2=None):
+    def train_and_predict(self, X_train, y_train, X_test1, cell_test1, X_test2=None, cell_test2=None):
 
         n_bootstrap = int(0.9*X_train.shape[0]) # fraction of training set to use to train each model in ensemble
         states = self.n_ensembles*np.arange(1, self.n_ensembles + 1, 1) + self.n_split + self.start_seed
@@ -133,7 +133,7 @@ class XGBModel:
             regr.fit(X_train[idx], y_train[idx])
 
             # save model
-            with open('{}/models/{}_{}_{}.pkl'.format(dts, self.experiment_name, i, self.cell_idx[self.n_split]), 'wb') as f:
+            with open('{}/models/{}_{}_{}.pkl'.format(dts, self.experiment_name, i, cell_test1), 'wb') as f:
                 pickle.dump(regr, f)
 
             # make predictions
@@ -145,6 +145,8 @@ class XGBModel:
             if X_test2 is not None:
                 y_pred_te2 = regr.predict(X_test2)
                 y_pred_te2s.append(y_pred_te2.reshape(1, y_pred_te2.shape[0], -1))
+                with open('{}/models/{}_{}_{}.pkl'.format(dts, self.experiment_name, i, cell_test2), 'wb') as f:
+                    pickle.dump(regr, f)
 
         # aggregate predictions from each model in ensemble
         y_pred_trs = np.vstack(y_pred_trs)
@@ -178,7 +180,7 @@ class XGBModel:
             X_train, y_train, X_test1, y_test1, X_test2, y_test2, cell_test1, cell_test2 = self.split_by_cell()
 
             # train model and predict on train and test data
-            y_pred_tr, y_pred_tr_err, y_pred_te1, y_pred_te1_err, y_pred_te2, y_pred_te2_err = self.train_and_predict(X_train, y_train, X_test1, X_test2=X_test2)
+            y_pred_tr, y_pred_tr_err, y_pred_te1, y_pred_te1_err, y_pred_te2, y_pred_te2_err = self.train_and_predict(X_train, y_train, X_test1, cell_test1=cell_test1, X_test2=X_test2, cell_test2=cell_test2)
 
             dts = '../results/{}'.format(self.experiment)
             # save test cell predictions
