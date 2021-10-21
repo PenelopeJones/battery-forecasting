@@ -136,18 +136,6 @@ def extract_data(experiment, channels):
                       'PJ104':'variable-discharge',
                       'PJ105':'variable-discharge',
                       'PJ106':'variable-discharge',
-                      }
-    """
-    experiment_map = {'PJ097':'variable-discharge',
-                      'PJ098':'variable-discharge',
-                      'PJ099':'variable-discharge',
-                      'PJ100':'variable-discharge',
-                      'PJ101':'variable-discharge',
-                      'PJ102':'variable-discharge',
-                      'PJ103':'variable-discharge',
-                      'PJ104':'variable-discharge',
-                      'PJ105':'variable-discharge',
-                      'PJ106':'variable-discharge',
                       'PJ107':'variable-discharge',
                       'PJ108':'variable-discharge',
                       'PJ109':'variable-discharge',
@@ -179,7 +167,6 @@ def extract_data(experiment, channels):
                       'PJ151':'variable-discharge',
                       'PJ152':'variable-discharge',
                       }
-    """
 
     for channel in channels:
 
@@ -190,7 +177,7 @@ def extract_data(experiment, channels):
             cell_no = int(cell[-3:])
             #cmap = plt.get_cmap(name, 70)
             #cell_ars = []
-            dir = '../data/mountgrove/{}/'.format(experiment_map[cell])
+            dir = '../data/{}/'.format(experiment_map[cell])
 
             # First get the initial EIS and GCPL
             cycle = 0
@@ -806,7 +793,7 @@ def extract_n_step_data(experiment, channels):
             cell_no = int(cell[-3:])
             #cmap = plt.get_cmap(name, 70)
             #cell_ars = []
-            dir = '../data/mountgrove/{}/'.format(experiment_map[cell])
+            dir = '../data/{}/'.format(experiment_map[cell])
 
             # First get the initial EIS and GCPL
             cycle = 0
