@@ -33,6 +33,7 @@ y = cap_ds_var
 for n_cells in n_cells_list:
     experiment_name = '{}_{}cells_xgb'.format(input_name, n_cells)
     experiment_info = '\nInput: {} \tOutput: Q_n+1 \t{} cells \nMax depth: {}\t N estimators: {}\t N ensembles: {}\tSplits:{}\n'.format(input_name, n_cells, params['max_depth'], params['n_estimators'],
+                                                                                                                                        params['n_ensembles'], params['n_splits'])
     t0 = time.time()
     r2s_tr = []
     r2s_te = []
