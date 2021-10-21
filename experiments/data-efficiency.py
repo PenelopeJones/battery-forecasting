@@ -9,7 +9,6 @@ from sklearn.metrics import r2_score
 from utils.exp_util import extract_data, extract_input
 from utils.models import XGBModel
 
-
 import pdb
 
 channels = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -29,6 +28,7 @@ x = extract_input(input_name, data_var)
 
 # output = next cycle discharge capacity
 y = cap_ds_var
+n_splits = params['n_splits']
 
 for n_cells in n_cells_list:
     experiment_name = '{}_{}cells_xgb'.format(input_name, n_cells)
@@ -42,7 +42,7 @@ for n_cells in n_cells_list:
 
     for split in range(n_splits):
         cell_ids_s = cell_ids[0:n_cells+2]
-        experiment_info = '\nInput: {} \tOutput: c(discharge)_n+1 \nMax depth: {}\tSplits:{}\n'.format(input_name, max_depth, n_cells)
+        experiment_info = '\nInput: {} \tOutput: c(discharge)_n+1 \nMax depth: {}\tSplits:{}\n'.format(input_name, params['max_depth'], n_cells)
         print(cell_ids[0])
         print(cell_ids[1])
         cell_test1 = cell_ids[0]
@@ -58,7 +58,6 @@ for n_cells in n_cells_list:
         y_test1 = cap_ds_var[idx_test1]
         x_test2 = x[idx_test2]
         y_test2 = cap_ds_var[idx_test2]
-
 
         regressor = XGBModel(None, None, cell_s, experiment, experiment_name, n_ensembles=params['n_ensembles'],
                              n_splits=params['n_splits'], max_depth=params['max_depth'],
