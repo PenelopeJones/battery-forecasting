@@ -14,7 +14,7 @@ params = {'max_depth':10,
           'n_estimators':25,
           'n_ensembles':2}
 experiment = 'variable-discharge'
-log_name = 'results/{}/log-n-step-lookahead.txt'.format(experiment)
+log_name = '../results/{}/log-n-step-lookahead.txt'.format(experiment)
 
 # Test model using different state representations
 input_name = 'eis-actions'

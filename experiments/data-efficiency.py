@@ -17,7 +17,7 @@ params = {'max_depth':10,
           'n_estimators':25,
           'n_ensembles':2}
 experiment = 'variable-discharge'
-log_name = 'results/{}/log-n-cells.txt'.format(experiment)
+log_name = '../results/{}/log-n-cells.txt'.format(experiment)
 input_name = 'eis-actions'
 n_cells_list = [2, 4, 8, 16, 20]
 p = np.random.permutation(24)

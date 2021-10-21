@@ -14,7 +14,7 @@ params = {'max_depth':10,
           'n_estimators':25,
           'n_ensembles':2}
 experiment = 'variable-discharge'
-log_name = 'results/{}/log-next-cycle.txt'.format(experiment)
+log_name = '../results/{}/log-next-cycle.txt'.format(experiment)
 
 # Test model using different state representations
 input_names = ['actions', 'eis', 'eis-actions', 'cvfs-actions', 'c-actions', 'ct-actions',
