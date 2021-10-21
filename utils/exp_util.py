@@ -106,50 +106,6 @@ def extract_data(experiment, channels):
     geis_charge_no = 3
     gcpl_discharge_no = 4
 
-    cmap_names = ['Greys_r', 'Purples_r', 'Blues_r', 'Greens_r', 'Oranges_r', 'Reds_r', 'RdPu', 'BuPu', 'GnBu', 'YlOrRd']
-
-    experiment_map = {'PJ097':'variable-discharge',
-                      'PJ098':'variable-discharge',
-                      'PJ099':'variable-discharge',
-                      'PJ100':'variable-discharge',
-                      'PJ101':'variable-discharge',
-                      'PJ102':'variable-discharge',
-                      'PJ103':'variable-discharge',
-                      'PJ104':'variable-discharge',
-                      'PJ105':'variable-discharge',
-                      'PJ106':'variable-discharge',
-                      'PJ107':'variable-discharge',
-                      'PJ108':'variable-discharge',
-                      'PJ109':'variable-discharge',
-                      'PJ110':'variable-discharge',
-                      'PJ111':'variable-discharge',
-                      'PJ112':'variable-discharge',
-                      'PJ121':'fixed-discharge',
-                      'PJ122':'fixed-discharge',
-                      'PJ123':'fixed-discharge',
-                      'PJ124':'fixed-discharge',
-                      'PJ125':'fixed-discharge',
-                      'PJ126':'fixed-discharge',
-                      'PJ127':'fixed-discharge',
-                      'PJ128':'fixed-discharge',
-                      'PJ129':'fixed-discharge',
-                      'PJ130':'fixed-discharge',
-                      'PJ131':'fixed-discharge',
-                      'PJ132':'fixed-discharge',
-                      'PJ133':'fixed-discharge',
-                      'PJ134':'fixed-discharge',
-                      'PJ135':'fixed-discharge',
-                      'PJ136':'fixed-discharge',
-                      'PJ145':'variable-discharge',
-                      'PJ146':'variable-discharge',
-                      'PJ147':'variable-discharge',
-                      'PJ148':'variable-discharge',
-                      'PJ149':'variable-discharge',
-                      'PJ150':'variable-discharge',
-                      'PJ151':'variable-discharge',
-                      'PJ152':'variable-discharge',
-                      }
-
     for channel in channels:
 
         cells = cell_map[channel]
@@ -668,3 +624,128 @@ def identify_cells(experiment):
         cell_map = None
 
     return cell_map
+
+def extract_n_step_data(experiment, channels):
+
+    cell_map = identify_cells(experiment)
+    n_repeats = 1
+    n_steps = 4
+    new_log_freq = np.linspace(-1.66, 3.9, 100)
+
+    freq1 = np.log10(2.16)
+    freq2 = np.log10(17.8)
+    idx_freq1 = np.argmin(np.abs(new_log_freq-freq1))
+    idx_freq2 = np.argmin(np.abs(new_log_freq-freq2))
+
+    nl = 0
+
+    states = {}
+    actions = {}
+    cycles = {}
+    cap_ds = {}
+
+    for channel in channels:
+
+        cells = cell_map[channel]
+
+        for cell in cells:
+
+            cell_states = []
+            cell_actions = []
+            cell_cycles = []
+            cell_cap_ds = []
+
+            cell_no = int(cell[-3:])
+            #cmap = plt.get_cmap(name, 70)
+            #cell_ars = []
+            dir = '../data/mountgrove/{}/'.format(experiment_map[cell])
+
+            # First get the initial EIS and GCPL
+            cycle = 0
+            path = path_to_file(channel, cell, cycle, dir)
+            ptd = '{}{}/'.format(dir, cell)
+            filestart = '{}_{:03d}a_'.format(cell, cycle)
+
+            ptf_eis = '{}{}{:02d}_{}_CA{}.txt'.format(ptd, filestart, 4, 'GEIS', channel)
+            ptf_cv = '{}{}{:02d}_{}_CA{}.txt'.format(ptd, filestart, 3, 'GCPL', channel)
+
+            # Get features of discharge capacity-voltage curve
+
+            cap0, cvf0, e_out, d_rate, cap_curve_norm = discharge_features(ptf_cv, cycle)
+
+            print('Cell PJ{:03d}\t C0 {:.2f}'.format(cell_no, cap0))
+            oldcap = e_out
+
+            # Get initial features of discharge EIS spectrum
+            x_eis = eis_features(ptf_eis, feature_type=feature_type, new_log_freq=new_log_freq, n_repeats=n_repeats)
+            eis0 = x_eis
+
+            for cycle in range(2, 32):
+                path = path_to_file(channel, cell, cycle, dir)
+                ptd = '{}/{}/'.format(dir, cell)
+                filestart = '{}_{:03d}_'.format(cell, cycle)
+
+                geis_discharge_no = 1
+                gcpl_charge_no = 2
+                geis_charge_no = 3
+                gcpl_discharge_no = 4
+
+                for step in range(n_steps):
+                    true_cycle = 1+(cycle-2)*n_steps + step
+
+                    ptf_discharge_eis = '{}{}{:02d}_{}_CA{}.txt'.format(ptd, filestart, geis_discharge_no + step*4, 'GEIS', channel)
+                    ptf_charge_gcpl = '{}{}{:02d}_{}_CA{}.txt'.format(ptd, filestart, gcpl_charge_no + step*4, 'GCPL', channel)
+                    ptf_charge_eis = '{}{}{:02d}_{}_CA{}.txt'.format(ptd, filestart, geis_charge_no + step*4, 'GEIS', channel)
+                    ptf_discharge_gcpl = '{}{}{:02d}_{}_CA{}.txt'.format(ptd, filestart, gcpl_discharge_no + step*4, 'GCPL', channel)
+
+                    ptf_files = [ptf_discharge_eis, ptf_charge_gcpl, ptf_charge_eis, ptf_discharge_gcpl]
+
+                    #check_files(ptf_files)
+
+                    # Get features of discharge EIS spectrum
+                    try:
+                        eis_d = eis_features(ptf_discharge_eis, feature_type=feature_type, new_log_freq=new_log_freq, n_repeats=1)
+                    except:
+                        eis_d = None
+
+                    # Compute the time to charge
+                    try:
+                        t_charge, cap_c, c1_rate, c2_rate, t1_charge, t2_charge, ocv = charge_features(ptf_charge_gcpl)
+
+                    except:
+                        t_charge = None
+                        cap_c = None
+                        c1_rate = None
+                        c2_rate = None
+
+                    # Get features of discharge capacity-voltage curve
+                    try:
+                        cap_d, cvf, _, d_rate, _ = discharge_features(ptf_discharge_gcpl, true_cycle, cap_curve_norm)
+                    except:
+                        cap_d = None
+                        cvf = None
+                        d_rate = None
+
+                    if any(elem is None for elem in (eis_d, t_charge, cap_c, cap_d)):
+                        #print('{:02d}\t{} {} {}'.format(true_cycle, t_charge, cap_c, cap_d))
+                        continue
+                    else:
+                        cell_states.append(eis_d)
+                        cell_actions.append(np.array([d_rate, c1_rate, c2_rate]).reshape(1, -1))
+                        cell_cap_ds.append(cap_d)
+                        cell_cycles.append(1+(cycle-2)*n_steps + step)
+                        #print('{:02d}\t{:.1f}\t{:.1f}\t{:.3f}\t{:.1f}\t{:.1f}\t{:.1f}\t{:.1f}'.format(1+(cycle-2)*n_steps + step, c1_rate, c2_rate, ocv, t_charge, t1, t2, t_charge-t1-t2))
+
+            cell_states = np.vstack(np.array(cell_states))
+            cell_actions = np.vstack(np.array(cell_actions))
+            cell_cycles = np.array(cell_cycles)
+            cell_cap_ds = np.array(cell_cap_ds)
+
+            states[cell] = cell_states
+            actions[cell] = cell_actions
+            cycles[cell] = cell_cycles
+            cap_ds[cell] = cell_cap_ds
+
+    data = (states, actions, cycles, cap_ds)
+
+    return data
