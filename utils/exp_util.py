@@ -482,6 +482,8 @@ def discharge_features(ptf, cycle, cap_curve_norm=None):
     else:
         return None
 
+def general_sigmoid(x, a, b, c):
+    return a / (1.0 + np.exp(b*(x-c)))
 
 def cv_features(capacity, v):
     # Extra feature from discharge curve found by looking at the capacity matrix; difference in discharge curve over
