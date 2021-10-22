@@ -5,7 +5,7 @@ import pickle
 
 import numpy as np
 
-from utils.exp_util import extract_data, extract_n_step_data, extract_input
+from utils.exp_util import extract_data, extract_n_step_data, extract_input, identify_cells
 from utils.models import XGBModel
 
 import pdb
@@ -24,6 +24,8 @@ input_name = 'eis-actions'
 # Extract variable discharge data set
 (states, actions, cycles, cap_ds) = extract_n_step_data(experiment, channels)
 
+cell_map = identify_cells(experiment, channels)
+
 n_steps = [1, 2, 4, 8, 12, 16, 20, 24, 32, 40]
 
 for step in n_steps:
@@ -39,7 +41,7 @@ for step in n_steps:
     nl_caps = []
     nl_idx = []
 
-    for channel, name in zip(channels, cmap_names):
+    for channel in channels:
         cells = cell_map[channel]
         for cell in cells:
             cell_states = states[cell]
