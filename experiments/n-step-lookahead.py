@@ -11,10 +11,10 @@ from utils.models import XGBModel
 import pdb
 
 channels = [1, 2, 3, 4, 5, 6, 7, 8]
-params = {'max_depth':10,
-          'n_splits':2,
-          'n_estimators':25,
-          'n_ensembles':2}
+params = {'max_depth':100,
+          'n_splits':12,
+          'n_estimators':500,
+          'n_ensembles':10}
 experiment = 'variable-discharge'
 log_name = '../results/{}/log-n-step-lookahead.txt'.format(experiment)
 
@@ -25,12 +25,6 @@ input_name = 'eis-actions'
 (states, actions, cycles, cap_ds) = extract_n_step_data(experiment, channels)
 
 n_steps = [1, 2, 4, 8, 12, 16, 20, 24, 32, 40]
-
-#data = (last_caps, sohs, eis_ds, cvfs, ocvs, cap_throughputs, d_rates, c1_rates, c2_rates)
-print('Number of datapoints = {}'.format(data_var[0].shape[0]))
-
-# output = next cycle discharge capacity
-y = cap_ds_var
 
 for step in n_steps:
     experiment_name = '{}_n{}_xgb'.format(input_name, step)
