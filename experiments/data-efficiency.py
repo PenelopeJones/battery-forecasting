@@ -12,10 +12,10 @@ from utils.models import XGBModel
 import pdb
 
 channels = [1, 2, 3, 4, 5, 6, 7, 8]
-params = {'max_depth':10,
-          'n_splits':2,
-          'n_estimators':25,
-          'n_ensembles':2}
+params = {'max_depth':100,
+          'n_splits':12,
+          'n_estimators':500,
+          'n_ensembles':10}
 experiment = 'variable-discharge'
 log_name = '../results/{}/log-n-cells.txt'.format(experiment)
 input_name = 'eis-actions'
@@ -65,14 +65,14 @@ for n_cells in n_cells_list:
         y_pred_tr, y_pred_tr_err, y_pred_te1, y_pred_te1_err, y_pred_te2, y_pred_te2_err, = regressor.train_and_predict(x_train, y_train, x_test1,
                                                                                                                         cell_test1, x_test2, cell_test2)
 
-        dts = '../results/{}'.format(self.experiment)
+        dts = '../results/{}'.format(experiment)
         # save test cell predictions
-        np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_pred_te1)
-        np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_pred_te1_err)
-        np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_test1)
-        np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test2), y_pred_te2)
-        np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test2), y_pred_te2_err)
-        np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell_test2), y_test2)
+        np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, experiment_name, cell_test1), y_pred_te1)
+        np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, experiment_name, cell_test1), y_pred_te1_err)
+        np.save('{}/predictions/true_{}_{}.npy'.format(dts, experiment_name, cell_test1), y_test1)
+        np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, experiment_name, cell_test2), y_pred_te2)
+        np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, experiment_name, cell_test2), y_pred_te2_err)
+        np.save('{}/predictions/true_{}_{}.npy'.format(dts, experiment_name, cell_test2), y_test2)
 
         r2s_tr.append(r2_score(y_train, y_pred_tr))
         r2s_te.append(r2_score(y_test1, y_pred_te1))
