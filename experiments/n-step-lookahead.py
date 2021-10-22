@@ -24,7 +24,7 @@ input_name = 'eis-actions'
 # Extract variable discharge data set
 (states, actions, cycles, cap_ds) = extract_n_step_data(experiment, channels)
 
-cell_map = identify_cells(experiment, channels)
+cell_map = identify_cells(experiment)
 
 n_steps = [1, 2, 4, 8, 12, 16, 20, 24, 32, 40]
 
