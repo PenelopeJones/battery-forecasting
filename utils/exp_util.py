@@ -169,8 +169,6 @@ def extract_data(experiment, channels):
             cell_cap_nets.append(cap_net)
             cell_cap_throughputs.append(cap_throughput)
 
-
-
             for cycle in range(start_cycle, start_cycle+30):
                 path = path_to_file(channel, cell, cycle, dir)
                 ptd = '{}/{}/'.format(dir, cell)
@@ -658,13 +656,18 @@ def extract_n_step_data(experiment, channels):
             cell_no = int(cell[-3:])
             #cmap = plt.get_cmap(name, 70)
             #cell_ars = []
-            dir = '../data/mountgrove/{}/'.format(experiment_map[cell])
+            dir = '../data/{}/'.format(experiment_map[cell])
 
             # First get the initial EIS and GCPL
             cycle = 0
             path = path_to_file(channel, cell, cycle, dir)
             ptd = '{}{}/'.format(dir, cell)
             filestart = '{}_{:03d}a_'.format(cell, cycle)
+
+            if cell_no in [145, 146, 147, 148]:
+                start_cycle = 3
+            else:
+                start_cycle = 2
 
             ptf_eis = '{}{}{:02d}_{}_CA{}.txt'.format(ptd, filestart, 4, 'GEIS', channel)
             ptf_cv = '{}{}{:02d}_{}_CA{}.txt'.format(ptd, filestart, 3, 'GCPL', channel)
@@ -677,10 +680,10 @@ def extract_n_step_data(experiment, channels):
             oldcap = e_out
 
             # Get initial features of discharge EIS spectrum
-            x_eis = eis_features(ptf_eis, feature_type=feature_type, new_log_freq=new_log_freq, n_repeats=n_repeats)
+            x_eis = eis_features(ptf_eis, new_log_freq=new_log_freq, n_repeats=n_repeats)
             eis0 = x_eis
 
-            for cycle in range(2, 32):
+            for cycle in range(start_cycle, start_cycle+30):
                 path = path_to_file(channel, cell, cycle, dir)
                 ptd = '{}/{}/'.format(dir, cell)
                 filestart = '{}_{:03d}_'.format(cell, cycle)
@@ -704,7 +707,7 @@ def extract_n_step_data(experiment, channels):
 
                     # Get features of discharge EIS spectrum
                     try:
-                        eis_d = eis_features(ptf_discharge_eis, feature_type=feature_type, new_log_freq=new_log_freq, n_repeats=1)
+                        eis_d = eis_features(ptf_discharge_eis, new_log_freq=new_log_freq, n_repeats=1)
                     except:
                         eis_d = None
 
