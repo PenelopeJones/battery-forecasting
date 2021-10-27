@@ -19,7 +19,7 @@ experiment = 'variable-discharge'
 log_name = '../results/{}/log-n-step-lookahead.txt'.format(experiment)
 
 # Test model using different state representations
-input_name = 'eis-actions'
+input_name = 'eis-final-actions'
 
 # Extract variable discharge data set
 (states, actions, cycles, cap_ds) = extract_n_step_data(experiment, channels)
@@ -56,8 +56,12 @@ for step in n_steps:
                 nl_caps.append(cell_cap_ds)
 
             else:
-                for i in range(ns - nl):
-                    nl_actions.append(cell_actions[i:i+nl+1, :].reshape(1, -1))
+                if input_name == 'eis-actions':
+                    for i in range(ns - nl):
+                        nl_actions.append(cell_actions[i:i+nl+1, :].reshape(1, -1))
+                elif input_name == 'eis-final-actions':
+                    for i in range(ns - nl):
+                        nl_actions.append(cell_actions[i+nl, :].reshape(1, -1))
                 nl_states.append(cell_states[:-nl, :])
                 nl_caps.append(cell_cap_ds[nl:])
             nl_idx.append([cell]*(ns-nl))
