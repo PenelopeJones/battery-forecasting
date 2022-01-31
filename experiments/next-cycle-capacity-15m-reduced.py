@@ -33,7 +33,7 @@ y = cap_ds_var
 
 for i in range(len(input_names)):
     input_name = input_names[i]
-    experiment_name = '{}_n1_xgb'.format(input_name)
+    experiment_name = '{}_n1_xgb_reduced'.format(input_name)
     experiment_info = '\nInput: {} \tOutput: Q_n+1 \nMax depth: {}\t N estimators: {}\t N ensembles: {}\tSplits:{}\n'.format(input_name, params['max_depth'], params['n_estimators'],
                                                                                                                                         params['n_ensembles'], params['n_splits'])
     print(experiment_info)
