@@ -14,11 +14,10 @@ params = {'max_depth':100,
           'n_estimators':500,
           'n_ensembles':10}
 experiment = 'variable-discharge'
-log_name = '../results/{}/log-next-cycle.txt'.format(experiment)
+log_name = '../results/{}/log-next-cycle-12s.txt'.format(experiment)
 
 # Test model using different state representations
-input_names = ['actions', 'eis', 'eis-actions', 'cvfs-actions', 'c-actions', 'ct-actions',
-               'soh-actions', 'eis-cvfs-ct-c-actions', 'eis-cvfs-ct-actions']
+input_names = ['eis-actions', 'ecmer-actions', 'ecmr-actions', 'cvfs-actions', 'eis-cvfs-actions', 'ecmer-cvfs-actions', 'ecmr-cvfs-actions']
 
 # Extract variable discharge data set
 cell_var, cap_ds_var, data_var = extract_data(experiment, channels)
@@ -36,6 +35,8 @@ for i in range(len(input_names)):
                                                                                                                                         params['n_ensembles'], params['n_splits'])
     print(experiment_info)
     t0 = time.time()
+
+    pdb.set_trace()
 
     # extract relevant inputs
     x = extract_input(input_name, data_var)

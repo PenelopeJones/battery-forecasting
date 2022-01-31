@@ -115,7 +115,7 @@ def extract_data(experiment, channels):
             cell_no = int(cell[-3:])
             #cmap = plt.get_cmap(name, 70)
             #cell_ars = []
-            dir = '../data/{}/'.format(experiment_map[cell])
+            dir = '../data/raw-data/{}/'.format(experiment_map[cell])
 
             # First get the initial EIS and GCPL
             cycle = 0
@@ -309,6 +309,21 @@ def extract_data(experiment, channels):
     cap_inits = np.hstack(cap_inits)
     cell_idx = np.array([item for sublist in cell_idx for item in sublist])
     cvfs = np.vstack(cvfs)
+    """
+    np.save('cell_variable.npy', cell_idx)
+    np.save('cap_ds_variable.npy', cap_ds)
+    np.save('last_caps_variable.npy', last_caps)
+    np.save('soh_variable.npy', sohs)
+    np.save('eis_variable.npy', eis_ds)
+    np.save('eis_inits_variable.npy', eis_inits)
+    np.save('cvfs_variable.npy', cvfs)
+    np.save('ocvs_variable.npy', ocvs)
+    np.save('cap_throughputs_variable.npy', cap_throughputs)
+    np.save('d_rates_variable.npy', d_rates)
+    np.save('c1_rates_variable.npy', c1_rates)
+    np.save('c2_rates_variable.npy', c2_rates)
+    print('Saved data')
+    """
     data = (last_caps, sohs, eis_ds, cvfs, ocvs, cap_throughputs, d_rates, c1_rates, c2_rates)
 
     return cell_idx, cap_ds, data
@@ -327,29 +342,7 @@ def check_files(ptf_files):
             continue
     return
 
-def eis_features(path, new_log_freq=np.linspace(-1.66, 3.9, 500), n_repeats=1):
-    # Get initial features of discharge EIS spectrum
-    df = pd.read_csv(path, delimiter='\t')
-    df.columns = column_map['GEIS']
 
-    re_z = df['re_z'].to_numpy()
-    im_z = df['-im_z'].to_numpy()
-    freq = df['freq'].to_numpy()
-
-    re_z = np.mean(re_z.reshape(n_repeats, -1), axis=0)
-    im_z = np.mean(im_z.reshape(n_repeats, -1), axis=0)
-    freq = np.mean(freq.reshape(n_repeats, -1), axis=0)
-    log_freq = np.log10(freq)
-
-    # interpolate
-    f1 = interp1d(log_freq, re_z, kind='cubic')
-    f2 = interp1d(log_freq, im_z, kind='cubic')
-
-    # compute new values
-    re_z = f1(new_log_freq)
-    im_z = f2(new_log_freq)
-
-    return np.hstack((re_z, im_z)).reshape(-1)
 
 def discharge_features(ptf, cycle, cap_curve_norm=None):
 
@@ -487,6 +480,117 @@ def charge_features(ptf):
     else:
         return None
 
+def overall_fitness_er(p, freq, re_z, im_z):
+
+    (r1, r2, c2, r3, c3, A) = p
+
+    computed_re_z = real_z_er(freq, r1, r2, c2, r3, c3, A)
+    computed_im_z = imaginary_z_er(freq, r2, c2, r3, c3, A)
+
+    computed_mod_z = np.sqrt(computed_re_z**2 + computed_im_z**2)
+    computed_phase_z = np.arctan(computed_im_z / computed_re_z)
+    mod_z = np.sqrt(re_z**2 + im_z**2)
+    phase_z = np.arctan(im_z / re_z)
+
+    penalty = (re_z - computed_re_z)**2 + (im_z - computed_im_z)**2 + (mod_z - computed_mod_z)**2 + (phase_z - computed_phase_z)**2
+
+    return penalty
+
+def real_z_er(freq, r1, r2, c2, r3, c3, A):
+    w = 2*np.pi*freq
+
+    return r1 + r2 / (1+(w*r2*c2)**2) + (r3 + A/w**0.5) / ((1 + A*c3*w**0.5)**2 + (c3*w*(r3 + A/w**0.5))**2)
+
+def imaginary_z_er(freq, r2, c2, r3, c3, A):
+    w = 2*np.pi*freq
+
+    return w*r2**2*c2 / (1+(w*r2*c2)**2) + (w*c3*(r3+A/w**0.5)**2  + A**2*c3 + A/w**0.5) / ((1 + A*c3*w**0.5)**2 + (c3*w*(r3 + A/w**0.5))**2)
+
+def general_sigmoid(x, a, b, c):
+    return a / (1.0 + np.exp(b*(x-c)))
+
+def overall_fitness_r(p, freq, re_z, im_z):
+
+    (r1, r3, c3, A) = p
+
+    computed_re_z = real_z_r(freq, r1, r3, c3, A)
+    computed_im_z = imaginary_z_r(freq, r3, c3, A)
+
+    computed_mod_z = np.sqrt(computed_re_z**2 + computed_im_z**2)
+    computed_phase_z = np.arctan(computed_im_z / computed_re_z)
+    mod_z = np.sqrt(re_z**2 + im_z**2)
+    phase_z = np.arctan(im_z / re_z)
+
+    penalty = (re_z - computed_re_z)**2 / (np.mean(re_z))**2 + (im_z - computed_im_z)**2 / (np.mean(im_z))**2+ (mod_z - computed_mod_z)**2 / (np.mean(mod_z))**2 + (phase_z - computed_phase_z)**2 / (np.mean(phase_z))**2
+
+    return penalty
+
+def real_z_r(freq, r1, r3, c3, A):
+    w = 2*np.pi*freq
+
+    return r1 + (r3 + A/w**0.5) / ((1 + A*c3*w**0.5)**2 + (c3*w*(r3 + A/w**0.5))**2)
+
+def imaginary_z_r(freq, r3, c3, A):
+    w = 2*np.pi*freq
+
+    return (w*c3*(r3+A/w**0.5)**2  + A**2*c3 + A/w**0.5) / ((1 + A*c3*w**0.5)**2 + (c3*w*(r3 + A/w**0.5))**2)
+
+def extract_features(log_freq, re_z, im_z):
+    assert log_freq.shape == re_z.shape == im_z.shape
+
+    freq = 10**log_freq
+
+    popt2, pcov2 = curve_fit(imaginary_z, freq, im_z)
+    popt1, pcov1 = curve_fit(real_z, freq, re_z, p0=np.insert(popt2, 0, re_z.min()))
+    pdb.set_trace()
+
+    return popt1, popt2
+
+def eis_features(path, new_log_freq=np.linspace(-1.66, 3.9, 100), n_repeats=1):
+    # Get initial features of discharge EIS spectrum
+    df = pd.read_csv(path, delimiter='\t')
+    df.columns = column_map['GEIS']
+
+    re_z = df['re_z'].to_numpy()
+    im_z = df['-im_z'].to_numpy()
+    freq = df['freq'].to_numpy()
+
+    re_z = np.mean(re_z.reshape(n_repeats, -1), axis=0)
+    im_z = np.mean(im_z.reshape(n_repeats, -1), axis=0)
+    freq = np.mean(freq.reshape(n_repeats, -1), axis=0)
+    log_freq = np.log10(freq)
+
+    # interpolate
+    f1 = interp1d(log_freq, re_z, kind='cubic')
+    f2 = interp1d(log_freq, im_z, kind='cubic')
+
+    # compute new values
+    re_z = f1(new_log_freq)
+    im_z = f2(new_log_freq)
+
+    return np.hstack((re_z, im_z)).reshape(-1)
+
+
+def eis_to_ecm(eis, new_log_freq, feature_type='randles'):
+    n_features = eis.shape[1] // 2
+    re_z = eis[:, :n_features]
+    im_z = eis[:, n_features:]
+    assert re_z.shape == im_z.shape
+
+    if feature_type == 'extended-randles':
+        x = np.zeros((re_z.shape[0], 6))
+        for i in range(re_z.shape[0]):
+            ls = least_squares(overall_fitness_er, x0=(1, 0.1, 0.1, 1, 1, 0.3), bounds=([0, 0, 0, 0, 0, 0], [100, 100, 100, 100, 100, 100]), args=(10**new_log_freq, re_z[i, :], im_z[i, :]))
+            x[i, :] = ls.x.reshape(-1)
+
+    elif feature_type == 'randles':
+        x = np.zeros((re_z.shape[0], 4))
+        for i in range(re_z.shape[0]):
+            ls = least_squares(overall_fitness_r, x0=(1, 0.1, 0.1, 0.3), bounds=([0, 0, 0, 0], [100, 100, 100, 100]), args=(10**new_log_freq, re_z[i, :], im_z[i, :]))
+            x[i, :] = ls.x.reshape(-1)
+    return x
+
+
 def extract_input(input_name, data):
     (c, soh, eis_ds, cvfs, ocvs, cap_throughputs, d_rates, c1_rates, c2_rates) = data
 
@@ -540,6 +644,28 @@ def extract_input(input_name, data):
 
     elif input_name == 'eis':
         x = eis_ds
+
+    elif input_name == 'ecmr-cvfs-actions':
+        states = eis_to_ecm(eis_ds, new_log_freq=np.linspace(-1.66, 3.9, 100), feature_type='randles')
+        states = np.concatenate((states, cvfs), axis=1)
+        print(states.shape)
+        x = np.concatenate((states, actions), axis=1)
+
+    elif input_name == 'ecmr-actions':
+        states = eis_to_ecm(eis_ds, new_log_freq=np.linspace(-1.66, 3.9, 100), feature_type='randles')
+        print(states.shape)
+        x = np.concatenate((states, actions), axis=1)
+
+    elif input_name == 'ecmer-cvfs-actions':
+        states = eis_to_ecm(eis_ds, new_log_freq=np.linspace(-1.66, 3.9, 100), feature_type='extended-randles')
+        states = np.concatenate((states, cvfs), axis=1)
+        print(states.shape)
+        x = np.concatenate((states, actions), axis=1)
+
+    elif input_name == 'ecmer-actions':
+        states = eis_to_ecm(eis_ds, new_log_freq=np.linspace(-1.66, 3.9, 100), feature_type='extended-randles')
+        print(states.shape)
+        x = np.concatenate((states, actions), axis=1)
 
     elif input_name == 'cvfs':
         x = cvfs
