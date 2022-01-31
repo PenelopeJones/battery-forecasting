@@ -17,8 +17,8 @@ experiment = 'variable-discharge'
 log_name = '../results/{}/log-next-cycle-12s.txt'.format(experiment)
 
 # Test model using different state representations
-input_names = ['eis-actions', 'ecmer-actions', 'ecmr-actions', 'cvfs-actions', 'eis-cvfs-actions', 'ecmer-cvfs-actions', 'ecmr-cvfs-actions']
-
+#input_names = ['eis-actions', 'ecmer-actions', 'ecmr-actions', 'cvfs-actions', 'eis-cvfs-actions', 'ecmer-cvfs-actions', 'ecmr-cvfs-actions']
+input_names = ['ecmr-cvfs-ct-c-actions', 'ecmer-cvfs-ct-c-actions', 'eis-cvfs-ct-c-actions']
 # Extract variable discharge data set
 cell_var, cap_ds_var, data_var = extract_data(experiment, channels)
 

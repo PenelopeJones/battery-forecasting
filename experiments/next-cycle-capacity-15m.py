@@ -18,8 +18,8 @@ params = {'max_depth':100,
 log_name = '../results/{}/log-next-cycle-32-vmax.txt'.format(experiment)
 
 # Test model using different state representations
-input_names = ['ecmer-actions', 'ecmr-actions', 'eis-actions', 'cvfs-actions', 'ecmer-cvfs-actions', 'ecmr-cvfs-actions', 'eis-cvfs-actions', 'c-actions', 'actions']
-
+#input_names = ['ecmer-actions', 'ecmr-actions', 'eis-actions', 'cvfs-actions', 'ecmer-cvfs-actions', 'ecmr-cvfs-actions', 'eis-cvfs-actions', 'c-actions', 'actions']
+input_names = ['ecmr-cvfs-ct-c-actions', 'ecmer-cvfs-ct-c-actions', 'eis-cvfs-ct-c-actions']
 # Extract variable discharge data set
 cell_var, cap_ds_var, data_var = extract_data(experiment, channels)
 #cell_var = np.load('cell_15m.npy')

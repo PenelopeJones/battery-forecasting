@@ -613,6 +613,20 @@ def extract_input(input_name, data=None):
         print(states.shape)
         x = np.concatenate((states, actions), axis=1)
 
+    elif input_name == 'ecmr-cvfs-ct-c-actions':
+        states = eis_to_ecm(eis_ds, new_log_freq=np.linspace(-1.66, 3.9, 100), feature_type='randles')
+        states = np.concatenate((states, cvfs), axis=1)
+        states = np.concatenate((states, cap_throughputs.reshape(-1, 1)), axis=1)
+        states = np.concatenate((states, c.reshape(-1, 1)), axis=1)
+        x = np.concatenate((states, actions), axis=1)
+
+    elif input_name == 'ecmer-cvfs-ct-c-actions':
+        states = eis_to_ecm(eis_ds, new_log_freq=np.linspace(-1.66, 3.9, 100), feature_type='extended-randles')
+        states = np.concatenate((states, cvfs), axis=1)
+        states = np.concatenate((states, cap_throughputs.reshape(-1, 1)), axis=1)
+        states = np.concatenate((states, c.reshape(-1, 1)), axis=1)
+        x = np.concatenate((states, actions), axis=1)
+
     elif input_name == 'ecmr-cvfs-actions':
         states = eis_to_ecm(eis_ds, new_log_freq=np.linspace(-1.66, 3.9, 100), feature_type='randles')
         states = np.concatenate((states, cvfs), axis=1)
