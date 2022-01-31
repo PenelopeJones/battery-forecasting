@@ -36,8 +36,6 @@ for i in range(len(input_names)):
     print(experiment_info)
     t0 = time.time()
 
-    pdb.set_trace()
-
     # extract relevant inputs
     x = extract_input(input_name, data_var)
 

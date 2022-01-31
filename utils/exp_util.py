@@ -542,7 +542,6 @@ def extract_features(log_freq, re_z, im_z):
 
     popt2, pcov2 = curve_fit(imaginary_z, freq, im_z)
     popt1, pcov1 = curve_fit(real_z, freq, re_z, p0=np.insert(popt2, 0, re_z.min()))
-    pdb.set_trace()
 
     return popt1, popt2
 
