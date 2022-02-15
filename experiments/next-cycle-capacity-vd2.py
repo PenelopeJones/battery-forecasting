@@ -19,7 +19,7 @@ params = {'max_depth':100,
           'n_splits':8,
           'n_estimators':500,
           'n_ensembles':10}
-log_name = '../results/{}/log-next-cycle-16.txt'.format(experiment)
+log_name = '../results/{}/log-next-cycle-random-split-16.txt'.format(experiment)
 
 # Test model using different state representations
 input_names = ['actions', 'cvfs-actions', 'eis-actions', 'ecmer-actions', 'ecmr-actions', 'ecmer-cvfs-actions',
