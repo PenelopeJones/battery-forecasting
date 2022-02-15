@@ -14,7 +14,7 @@ channels = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8',
 params = {'max_depth':100,
           'n_splits':4,
           'n_estimators':500,
-          'n_ensembles':3}
+          'n_ensembles':10}
 log_name = '../results/{}/log-next-cycle-16.txt'.format(experiment)
 
 # Test model using different state representations
