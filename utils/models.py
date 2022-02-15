@@ -156,6 +156,8 @@ class XGBModel:
         y_pred_trs = []
         y_pred_te1s = []
         y_pred_te2s = []
+        y_pred_te3s = []
+        y_pred_te4s = []
 
         for i, ensemble_state in enumerate(states):
 
