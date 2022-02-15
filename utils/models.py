@@ -243,7 +243,7 @@ class XGBModel:
             X_train, y_train, X_test1, y_test1, X_test2, y_test2, cell_test1, cell_test2 = self.split_by_cell()
 
             # train model and predict on train and test data
-            y_pred_tr, y_pred_tr_err, y_pred_te1, y_pred_te1_err, y_pred_te2, y_pred_te2_err = self.train_and_predict(X_train, y_train, X_test1, cell_test1=cell_test1, X_test2=X_test2, cell_test2=cell_test2)
+            y_pred_tr, y_pred_tr_err, y_pred_te1, y_pred_te1_err, y_pred_te2, y_pred_te2_err, _, _, _, _ = self.train_and_predict(X_train, y_train, X_test1, cell_test1=cell_test1, X_test2=X_test2, cell_test2=cell_test2)
 
             dts = '../results/{}'.format(self.experiment)
             # save test cell predictions
@@ -340,7 +340,7 @@ class XGBModel:
         pe_te = 100*np.median(np.hstack(pes_te).reshape(-1))
         print('Train R2:{}\t Train error: {}\t Test R2: {}\t Test error: {}'.format(r2_tr, pe_tr, r2_te, pe_te))
         print(r2s_te)
-        print(pes_te)
+        #print(pes_te)
         with open(log_name, 'a+') as file:
             file.write(experiment_info)
             file.write('Train R2:{}\t Train error: {}\t Test R2: {}\t Test error: {}\n'.format(r2_tr, pe_tr, r2_te, pe_te))
