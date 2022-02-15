@@ -42,7 +42,7 @@ for i in range(len(input_names)):
     t0 = time.time()
 
     # extract relevant inputs
-    x = extract_input(input_name, data_var)
+    x = extract_input(input_name, data_var, suffix='vd2')
 
     regressor = XGBModel(x, y, cell_var, experiment, experiment_name, n_ensembles=params['n_ensembles'],
                          n_splits=params['n_splits'], max_depth=params['max_depth'],
