@@ -95,7 +95,7 @@ class XGBModel:
         cell_test2 = self.cell_idx[self.n_split*4 + 1]
         cell_test3 = self.cell_idx[self.n_split*4 + 2]
         cell_test4 = self.cell_idx[self.n_split*4 + 3]
-        print('Split {}: Test cells {} and {} and {}'.format(self.n_split, cell_test1, cell_test2, cell_test3, cell_test4))
+        print('Split {}: Test cells {} and {} and {} and {}'.format(self.n_split, cell_test1, cell_test2, cell_test3, cell_test4))
 
         # identify test cell datapoints
         idx_test1 = np.array(np.where(self.cell_nos == cell_test1)).reshape(-1)
@@ -332,8 +332,8 @@ class XGBModel:
             pes_tr.append(np.abs(y_train - y_pred_tr) / y_train)
             pes_te.append(np.abs(y_test1 - y_pred_te1) / y_test1)
             pes_te.append(np.abs(y_test2 - y_pred_te2) / y_test2)
-            pes_te.append(np.abs(y_test1 - y_pred_te3) / y_test3)
-            pes_te.append(np.abs(y_test2 - y_pred_te4) / y_test4)
+            pes_te.append(np.abs(y_test3 - y_pred_te3) / y_test3)
+            pes_te.append(np.abs(y_test4 - y_pred_te4) / y_test4)
         r2_tr = np.median(np.array(r2s_tr))
         r2_te = np.median(np.array(r2s_te))
         pe_tr = 100*np.median(np.hstack(pes_tr).reshape(-1))
