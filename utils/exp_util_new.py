@@ -87,6 +87,23 @@ experiment_map = {'PJ097':'variable-discharge',
                   'PJ229':'15-minutes',
                   'PJ230':'15-minutes',
                   'PJ231':'15-minutes',
+                  'PJ247':'variable-discharge-type2',
+                  'PJ248':'variable-discharge-type2',
+                  'PJ249':'variable-discharge-type2',
+                  'PJ250':'variable-discharge-type2',
+                  'PJ251':'variable-discharge-type2',
+                  'PJ252':'variable-discharge-type2',
+                  'PJ253':'variable-discharge-type2',
+                  'PJ254':'variable-discharge-type2',
+                  'PJ255':'variable-discharge-type2',
+                  'PJ256':'variable-discharge-type2',
+                  'PJ257':'variable-discharge-type2',
+                  'PJ258':'variable-discharge-type2',
+                  'PJ259':'variable-discharge-type2',
+                  'PJ260':'variable-discharge-type2',
+                  'PJ261':'variable-discharge-type2',
+                  'PJ262':'variable-discharge-type2',
+                  'PJ263':'variable-discharge-type2',
                   }
 column_map = {
     'GCPL': ['time', 'ewe', 'i', 'capacity', 'power', 'ox/red', 'unnamed'],
@@ -95,8 +112,263 @@ column_map = {
 
 cmap_names = ['Greys_r', 'Purples_r', 'Blues_r', 'Greens_r', 'Oranges_r', 'Reds_r', 'RdPu', 'BuPu', 'GnBu', 'YlOrRd']
 
-def extract_data(experiment, channels):
 
+
+def extract_data_type2(experiment, channels, suffix='vd2'):
+    """
+    Code to extract data for the variable discharge data (type 2 cells).
+    """
+    cell_map = identify_cells(experiment)
+    n_repeats = 1
+    n_steps = 4
+    new_log_freq = np.linspace(-1.66, 3.9, 100)
+
+    freq1 = np.log10(2.16)
+    freq2 = np.log10(17.8)
+    idx_freq1 = np.argmin(np.abs(new_log_freq-freq1))
+    idx_freq2 = np.argmin(np.abs(new_log_freq-freq2))
+
+    nl = 0
+
+    c1_rates = []
+    c2_rates = []
+    d_rates = []
+    eis_ds = []
+    t_charges = []
+    t1_charges = []
+    t2_charges = []
+    ocvs = []
+    cap_cs = []
+    cap_ds = []
+    cap_nets = []
+    cap_throughputs = []
+    cap_inits = []
+    eis_inits = []
+    cycles = []
+    cell_idx = []
+    cvfs = []
+    last_caps = []
+    sohs = []
+    v_maxs = []
+
+    column_map = {
+        'GCPL': ['time', 'ewe', 'i', 'capacity', 'power', 'ox/red', 'unnamed'],
+        'GEIS': ['freq', 're_z', '-im_z', 'time', 'unnamed']
+    }
+
+    geis_discharge_no = 1
+    gcpl_charge_no = 2
+    gcpl_discharge_no = 4
+
+    for channel in channels:
+
+        cells = cell_map[channel]
+        print(cells)
+
+        for cell in cells:
+
+            cell_no = int(cell[-3:])
+            #cmap = plt.get_cmap(name, 70)
+            #cell_ars = []
+            dir = '../data/raw-data/{}/'.format(experiment_map[cell])
+
+            # First get the initial EIS and GCPL
+            cycle = 0
+            path = path_to_file(channel, cell, cycle, dir)
+            ptd = '{}{}/'.format(dir, cell)
+            filestart = '{}_{:03d}_'.format(cell, cycle)
+
+            ptf_eis = '{}{}{:02d}_{}_C{}.txt'.format(ptd, filestart, 3, 'GEIS', channel)
+            ptf_cv = '{}{}{:02d}_{}_C{}.txt'.format(ptd, filestart, 2, 'GCPL', channel)
+
+            # Get features of discharge capacity-voltage curve
+
+            cap0, cvf0, e_out, d_rate, cap_curve_norm = discharge_features(ptf_cv, cycle)
+
+            oldcap = e_out
+
+            # Get initial features of discharge EIS spectrum
+            x_eis = eis_features(ptf_eis, new_log_freq=new_log_freq, n_repeats=n_repeats)
+            eis0 = x_eis
+
+            cell_c1_rates = []
+            cell_c2_rates = []
+            cell_d_rates = []
+            cell_eis_cs = []
+            cell_eis_ds = []
+            cell_t_charges = []
+            cell_t1_charges = []
+            cell_t2_charges = []
+            cell_ocvs = []
+            cell_cap_cs = []
+            cell_cap_ds = []
+            cell_cycles = []
+            cell_cap_nets = []
+            cell_cap_throughputs = []
+            cell_cvfs = []
+            cell_cvfs.append(cvf0)
+
+            cell_last_caps = []
+            cell_sohs = []
+            cell_last_caps.append(cap0)
+            cell_sohs.append(1)
+
+            cap_net = 0
+            cap_throughput = 0
+            cell_cap_nets.append(cap_net)
+            cell_cap_throughputs.append(cap_throughput)
+
+            if cell_no in [202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215]:
+                start_cycle = 2
+            else:
+                start_cycle = 2
+
+            if cell_no in [204, 205, 206, 207, 212, 213, 214, 215]:
+                v_max = 4.2
+            else:
+                v_max = 4.3
+
+            print('Cell PJ{:03d}\t C0 {:.2f}\t Start cycle {}'.format(cell_no, cap0, start_cycle))
+            for cycle in range(start_cycle, start_cycle+25):
+                path = path_to_file(channel, cell, cycle, dir)
+                ptd = '{}/{}/'.format(dir, cell)
+                filestart = '{}_{:03d}_'.format(cell, cycle)
+
+                for step in range(n_steps):
+                    true_cycle = 1+(cycle-2)*n_steps + step
+
+                    ptf_discharge_eis = '{}{}{:02d}_{}_C{}.txt'.format(ptd, filestart, geis_discharge_no + step*4, 'GEIS', channel)
+                    ptf_charge_gcpl = '{}{}{:02d}_{}_C{}.txt'.format(ptd, filestart, gcpl_charge_no + step*4, 'GCPL', channel)
+                    #ptf_charge_eis = '{}{}{:02d}_{}_C{}.txt'.format(ptd, filestart, geis_charge_no + step*3, 'GEIS', channel)
+                    ptf_discharge_gcpl = '{}{}{:02d}_{}_C{}.txt'.format(ptd, filestart, gcpl_discharge_no + step*4, 'GCPL', channel)
+
+                    ptf_files = [ptf_discharge_eis, ptf_charge_gcpl, ptf_discharge_gcpl]
+
+                    check_files(ptf_files)
+
+                    # Get features of discharge EIS spectrum
+                    try:
+                        eis_d = eis_features(ptf_discharge_eis, new_log_freq=new_log_freq, n_repeats=1)
+                    except:
+                        eis_d = None
+
+                    # Compute the time to charge
+                    try:
+                        t_charge, cap_c, c1_rate, c2_rate, ocv = charge_features(ptf_charge_gcpl, suffix=suffix)
+
+
+                    except:
+                        t_charge = None
+                        cap_c = None
+                        c1_rate = None
+                        c2_rate = None
+
+                    # Get features of discharge capacity-voltage curve
+                    try:
+                        cap_d, cvf, _, d_rate, _ = discharge_features(ptf_discharge_gcpl, true_cycle, cap_curve_norm)
+                    except:
+                        cap_d = None
+                        cvf = None
+                        d_rate = None
+
+                    if any(elem is None for elem in (eis_d, t_charge, cap_c, cap_d)):
+                        #print('{:02d}\t{} {} {}'.format(true_cycle, t_charge, cap_c, cap_d))
+                        continue
+                    else:
+                        cap_net += cap_c - cap_d
+                        cap_throughput += cap_c + cap_d
+                        cell_cvfs.append(cvf)
+                        cell_c1_rates.append(c1_rate)
+                        cell_c2_rates.append(c2_rate)
+                        cell_d_rates.append(d_rate)
+                        cell_eis_ds.append(eis_d)
+                        cell_t_charges.append(t_charge)
+                        cell_ocvs.append(ocv)
+                        cell_cap_cs.append(cap_c)
+                        cell_cap_ds.append(cap_d)
+                        cell_sohs.append(cap_d / cap0)
+                        cell_last_caps.append(cap_d)
+                        cell_cap_nets.append(cap_net)
+                        cell_cap_throughputs.append(cap_throughput)
+                        cell_cycles.append(1+(cycle-2)*n_steps + step)
+                        #print('{:02d}\t{:.1f}\t{:.1f}\t{:.3f}\t{:.1f}\t{:.1f}\t{:.1f}\t{:.1f}'.format(1+(cycle-2)*n_steps + step, c1_rate, c2_rate, ocv, t_charge, t1, t2, t_charge-t1-t2))
+
+            cell_c1_rates = np.array(cell_c1_rates)
+            cell_c2_rates = np.array(cell_c2_rates)
+            cell_d_rates = np.array(cell_d_rates)
+            cell_eis_ds = np.vstack(np.array(cell_eis_ds))
+            cell_cvfs = np.vstack(np.array(cell_cvfs))
+            cell_t_charges = np.array(cell_t_charges)
+            cell_ocvs = np.array(cell_ocvs)
+            cell_cap_cs = np.array(cell_cap_cs)
+            cell_cap_ds = np.array(cell_cap_ds)
+            cell_cap_nets = np.array(cell_cap_nets)
+            cell_cap_throughputs = np.array(cell_cap_throughputs)
+            cell_cycles = np.array(cell_cycles)
+            cell_last_caps = np.array(cell_last_caps)
+            cell_sohs = np.array(cell_sohs)
+
+            cell_idx.append([cell,]*cell_t_charges.shape[0])
+            v_maxs.append(v_max*np.ones(cell_t_charges.shape[0]))
+            cycles.append(cell_cycles)
+            c1_rates.append(cell_c1_rates.reshape(-1, 1))
+            c2_rates.append(cell_c2_rates.reshape(-1, 1))
+            d_rates.append(cell_d_rates.reshape(-1, 1))
+            eis_ds.append(cell_eis_ds)
+            t_charges.append(cell_t_charges)
+            ocvs.append(cell_ocvs)
+            cap_cs.append(cell_cap_cs)
+            cap_ds.append(cell_cap_ds)
+            last_caps.append(cell_last_caps[:-1])
+            sohs.append(cell_sohs[:-1])
+            cap_nets.append(cell_cap_nets[:-1])
+            cap_throughputs.append(cell_cap_throughputs[:-1])
+            cvfs.append(cell_cvfs[:-1, :])
+            cap_inits.append(cap0*np.ones(cell_t_charges.shape[0]))
+            eis_inits.append(np.tile(eis0, (cell_t_charges.shape[0], 1)))
+
+    cycles = np.hstack(cycles)
+    c1_rates = np.vstack(c1_rates)
+    c2_rates = np.vstack(c2_rates)
+    d_rates = np.vstack(d_rates)
+    eis_ds = np.vstack(eis_ds)
+
+    eis_inits = np.vstack(eis_inits)
+    t_charges = np.hstack(t_charges)
+    ocvs = np.hstack(ocvs)
+    cap_cs = np.hstack(cap_cs)
+    cap_ds = np.hstack(cap_ds)
+    last_caps = np.hstack(last_caps)
+    sohs = np.hstack(sohs)
+    cap_nets = np.hstack(cap_nets)
+    cap_throughputs = np.hstack(cap_throughputs)
+    cap_inits = np.hstack(cap_inits)
+    v_maxs = np.hstack(v_maxs)
+    cell_idx = np.array([item for sublist in cell_idx for item in sublist])
+    cvfs = np.vstack(cvfs)
+    data = (last_caps, sohs, eis_ds, cvfs, ocvs, cap_throughputs, d_rates, c1_rates, c2_rates, v_maxs)
+    np.save('cell_{}.npy'.format(suffix), cell_idx)
+    np.save('cap_ds_{}.npy'.format(suffix), cap_ds)
+    np.save('v_maxs_{}.npy'.format(suffix), v_maxs)
+    np.save('last_caps_{}.npy'.format(suffix), last_caps)
+    np.save('soh_{}.npy'.format(suffix), sohs)
+    np.save('eis_{}.npy'.format(suffix), eis_ds)
+    np.save('eis_inits_{}.npy'.format(suffix), eis_inits)
+    np.save('cvfs_{}.npy'.format(suffix), cvfs)
+    np.save('ocvs_{}.npy'.format(suffix), ocvs)
+    np.save('cap_throughputs_{}.npy'.format(suffix), cap_throughputs)
+    np.save('d_rates_{}.npy'.format(suffix), d_rates)
+    np.save('c1_rates_{}.npy'.format(suffix), c1_rates)
+    np.save('c2_rates_{}.npy'.format(suffix), c2_rates)
+    print('Saved data')
+
+    return cell_idx, cap_ds, data
+
+
+def extract_data(experiment, channels):
+    """
+    Code to extract data for the 15-minutes charging data
+    """
     cell_map = identify_cells(experiment)
     n_repeats = 1
     n_steps = 5
@@ -223,7 +495,7 @@ def extract_data(experiment, channels):
 
                     ptf_files = [ptf_discharge_eis, ptf_charge_gcpl, ptf_discharge_gcpl]
 
-                    #check_files(ptf_files)
+                    check_files(ptf_files)
 
                     # Get features of discharge EIS spectrum
                     try:
@@ -536,7 +808,7 @@ def cv_features(capacity, v):
 
     return c
 
-def charge_features(ptf):
+def charge_features(ptf, suffix='15m'):
     """
     Extract time to charge to 80% full capacity and also charge capacity
     :param channel:
@@ -559,30 +831,61 @@ def charge_features(ptf):
 
         df_charge = df.loc[df.i > 0.0]
         df_charge = df_charge.reset_index(drop=True)
-        c_rate = np.mean(df_charge.iloc[5:10].i.to_numpy())
-        t_charge = df_charge.time.max() - df_charge.time.min()
+
+
         charge_cap = df_charge.capacity.max()
         voltage_max = df_charge.ewe.max()
 
         #print('{:.1f}\t{:.1f}\t{:.1f}\t{:.1f}'.format(cap1, cap2, computed_cap, charge_cap))
-        return t_charge / 3600, charge_cap, c_rate, charge_cap*3600/t_charge, ocv
 
-def extract_input(input_name, data=None):
+        if suffix == '15m':
+            c_rate = np.mean(df_charge.iloc[5:10].i.to_numpy())
+            t_charge = df_charge.time.max() - df_charge.time.min()
+            return t_charge / 3600, charge_cap, c_rate, charge_cap*3600/t_charge, ocv
+        else:
+            idx = df.loc[df.i == 0.0].index.to_numpy()
+            change = np.array(np.where((idx[1:] - idx[:-1]) != 1)).reshape(-1)
+            assert change.shape[0] == 2, "Error in computing time to change"
+            idx_start1 = idx[change[0]]
+            idx_change1 = idx[change[0]+1]
+            idx_start2 = idx[change[1]]
+            idx_change2 = idx[change[1]+1]
+
+            df1_charge = df.loc[(df.i > 0.0) & (df.time < df.iloc[idx_change1].time)]
+            df2_charge = df.loc[(df.i > 0.0) & (df.time > df.iloc[idx_start2].time)]
+
+            t1 = df1_charge.time.max() - df1_charge.time.min()
+            t2 = df2_charge.time.max() - df2_charge.time.min()
+
+            c1_rate = np.mean(df1_charge.i.to_numpy())
+            c2_rate = np.mean(df2_charge.i.to_numpy())
+
+            cap1 = df1_charge.capacity.max()
+            cap2 = df2_charge.capacity.max()
+
+            t_charge = df_charge.time.max() - df_charge.time.min() - (df.iloc[idx_start2].time - df.iloc[idx_change1].time)
+
+            return t_charge / 3600, charge_cap, c1_rate, c2_rate, ocv
+
+def extract_input(input_name, data=None, suffix='15m'):
     if data is not None:
         (c, soh, eis_ds, cvfs, ocvs, cap_throughputs, d_rates, c1_rates, c2_rates, v_maxs) = data
     else:
-        c = np.load('last_caps_15m.npy')
-        soh = np.load('soh_15m.npy')
-        eis_ds = np.load('eis_15m.npy')
-        cvfs = np.load('cvfs_15m.npy')
-        ocvs = np.load('ocvs_15m.npy')
-        cap_throughputs = np.load('cap_throughputs_15m.npy')
-        d_rates = np.load('d_rates_15m.npy')
-        c1_rates = np.load('c1_rates_15m.npy')
-        c2_rates = np.load('c2_rates_15m.npy')
-        v_maxs = np.load('v_maxs_15m.npy')
+        c = np.load('last_caps_{}.npy'.format(suffix))
+        soh = np.load('soh_{}.npy'.format(suffix))
+        eis_ds = np.load('eis_{}.npy'.format(suffix))
+        cvfs = np.load('cvfs_{}.npy'.format(suffix))
+        ocvs = np.load('ocvs_{}.npy'.format(suffix))
+        cap_throughputs = np.load('cap_throughputs_{}.npy'.format(suffix))
+        d_rates = np.load('d_rates_{}.npy'.format(suffix))
+        c1_rates = np.load('c1_rates_{}.npy'.format(suffix))
+        c2_rates = np.load('c2_rates_{}.npy'.format(suffix))
+        v_maxs = np.load('v_maxs_{}.npy'.format(suffix))
 
-    actions = np.hstack([v_maxs.reshape(-1, 1), c1_rates.reshape(-1, 1)])
+    if suffix == '15m':
+        actions = np.hstack([v_maxs.reshape(-1, 1), c1_rates.reshape(-1, 1)])
+    elif suffix == 'vd2':
+        actions = np.hstack([c1_rates.reshape(-1, 1), c2_rates.reshape(-1, 1), d_rates.reshape(-1, 1)])
     #actions = c1_rates.reshape(-1, 1)
 
     if input_name == 'eis-cvfs-ct-actions':
@@ -744,6 +1047,23 @@ def identify_cells(experiment):
                 'B6':['PJ213','PJ229'],
                 'B7':['PJ214','PJ230'],
                 'B8':['PJ215','PJ231'],}
+    elif experiment == 'variable-discharge-type2':
+        cell_map = {'A1':['PJ248',],
+                'A2':['PJ249',],
+                'A3':['PJ250',],
+                'A4':['PJ251',],
+                'A5':['PJ252',],
+                'A6':['PJ253',],
+                'A7':['PJ254',],
+                'A8':['PJ255',],
+                'B1':['PJ256',],
+                'B2':['PJ257',],
+                'B3':['PJ258',],
+                'B4':['PJ259',],
+                'B5':['PJ260',],
+                'B6':['PJ261',],
+                'B7':['PJ262',],
+                'B8':['PJ263',],}
 
     elif experiment == 'both':
         cell_map = {'A1':['PJ097','PJ105', 'PJ121', 'PJ129', 'PJ145'],

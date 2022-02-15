@@ -88,6 +88,38 @@ class XGBModel:
         self.n_te = self.n // n_splits + 1 # number of test points
         self.idx = np.random.permutation(self.n)
         """
+    def split_into_four(self):
+
+        # leave 4 cells out to test
+        cell_test1 = self.cell_idx[self.n_split*4]
+        cell_test2 = self.cell_idx[self.n_split*4 + 1]
+        cell_test3 = self.cell_idx[self.n_split*4 + 2]
+        cell_test4 = self.cell_idx[self.n_split*4 + 3]
+        print('Split {}: Test cells {} and {} and {}'.format(self.n_split, cell_test1, cell_test2, cell_test3, cell_test4))
+
+        # identify test cell datapoints
+        idx_test1 = np.array(np.where(self.cell_nos == cell_test1)).reshape(-1)
+        idx_test2 = np.array(np.where(self.cell_nos == cell_test2)).reshape(-1)
+        idx_test3 = np.array(np.where(self.cell_nos == cell_test3)).reshape(-1)
+        idx_test4 = np.array(np.where(self.cell_nos == cell_test4)).reshape(-1)
+        idx_test = np.hstack([idx_test1, idx_test2, idx_test3, idx_test4]).reshape(-1)
+
+        # identify training cell datapoints
+        idx_train = np.delete(np.arange(self.X.shape[0]), idx_test)
+
+        # return train and test datasets
+        X_test1 = self.X[idx_test1, :]
+        y_test1 = self.y[idx_test1]
+        X_test2 = self.X[idx_test2, :]
+        y_test2 = self.y[idx_test2]
+        X_test3 = self.X[idx_test3, :]
+        y_test3 = self.y[idx_test3]
+        X_test4 = self.X[idx_test4, :]
+        y_test4 = self.y[idx_test4]
+        X_train = self.X[idx_train, :]
+        y_train = self.y[idx_train]
+
+        return X_train, y_train, X_test1, y_test1, X_test2, y_test2, X_test3, y_test3, X_test4, y_test4, cell_test1, cell_test2, cell_test3, cell_test4
 
     def split_by_cell(self):
 
@@ -114,7 +146,8 @@ class XGBModel:
 
         return X_train, y_train, X_test1, y_test1, X_test2, y_test2, cell_test1, cell_test2
 
-    def train_and_predict(self, X_train, y_train, X_test1, cell_test1, X_test2=None, cell_test2=None):
+    def train_and_predict(self, X_train, y_train, X_test1, cell_test1, X_test2=None, cell_test2=None,
+                          X_test3=None, cell_test3=None, X_test4=None, cell_test4=None):
 
         n_bootstrap = int(0.9*X_train.shape[0]) # fraction of training set to use to train each model in ensemble
         states = self.n_ensembles*np.arange(1, self.n_ensembles + 1, 1) + self.n_split + self.start_seed
@@ -148,6 +181,18 @@ class XGBModel:
                 with open('{}/models/{}_{}_{}.pkl'.format(dts, self.experiment_name, i, cell_test2), 'wb') as f:
                     pickle.dump(regr, f)
 
+            if X_test3 is not None:
+                y_pred_te3 = regr.predict(X_test3)
+                y_pred_te3s.append(y_pred_te3.reshape(1, y_pred_te3.shape[0], -1))
+                with open('{}/models/{}_{}_{}.pkl'.format(dts, self.experiment_name, i, cell_test3), 'wb') as f:
+                    pickle.dump(regr, f)
+
+            if X_test4 is not None:
+                y_pred_te4 = regr.predict(X_test4)
+                y_pred_te4s.append(y_pred_te4.reshape(1, y_pred_te4.shape[0], -1))
+                with open('{}/models/{}_{}_{}.pkl'.format(dts, self.experiment_name, i, cell_test4), 'wb') as f:
+                    pickle.dump(regr, f)
+
         # aggregate predictions from each model in ensemble
         y_pred_trs = np.vstack(y_pred_trs)
         y_pred_te1s = np.vstack(y_pred_te1s)
@@ -164,7 +209,23 @@ class XGBModel:
             y_pred_te2 = None
             y_pred_te2_err = None
 
-        return y_pred_tr.reshape(-1), y_pred_tr_err.reshape(-1), y_pred_te1.reshape(-1), y_pred_te1_err.reshape(-1), y_pred_te2.reshape(-1), y_pred_te2_err.reshape(-1)
+        if X_test3 is not None:
+            y_pred_te3s = np.vstack(y_pred_te3s)
+            y_pred_te3 = np.mean(y_pred_te3s, axis=0).reshape(-1)
+            y_pred_te3_err = np.sqrt(np.var(y_pred_te3s, axis=0)).reshape(-1)
+        else:
+            y_pred_te3 = None
+            y_pred_te3_err = None
+
+        if X_test4 is not None:
+            y_pred_te4s = np.vstack(y_pred_te4s)
+            y_pred_te4 = np.mean(y_pred_te4s, axis=0).reshape(-1)
+            y_pred_te4_err = np.sqrt(np.var(y_pred_te4s, axis=0)).reshape(-1)
+        else:
+            y_pred_te4 = None
+            y_pred_te4_err = None
+
+        return y_pred_tr.reshape(-1), y_pred_tr_err.reshape(-1), y_pred_te1.reshape(-1), y_pred_te1_err.reshape(-1), y_pred_te2.reshape(-1), y_pred_te2_err.reshape(-1), y_pred_te3, y_pred_te3_err, y_pred_te4, y_pred_te4_err
 
     def analysis(self, log_name, experiment_info):
 
@@ -225,4 +286,60 @@ class XGBModel:
             with open('{}/models/{}_{}.pkl'.format(dts, self.experiment_name, i), 'wb') as f:
                 pickle.dump(regr, f)
 
+        return
+
+    def analysis_vd2(self, log_name, experiment_info):
+
+        r2s_tr = []
+        r2s_te = []
+        pes_tr = []
+        pes_te = []
+
+        for n_split in range(self.n_splits):
+            self.n_split = n_split
+
+            # split data: 2 test cells
+            X_train, y_train, X_test1, y_test1, X_test2, y_test2, X_test3, y_test3, X_test4, y_test4, cell_test1, cell_test2, cell_test3, cell_test4 = self.split_into_four()
+
+            # train model and predict on train and test data
+            y_pred_tr, y_pred_tr_err, y_pred_te1, y_pred_te1_err, y_pred_te2, y_pred_te2_err, y_pred_te3, y_pred_te3_err, y_pred_te4, y_pred_te4_err = self.train_and_predict(X_train, y_train, X_test1, cell_test1=cell_test1, X_test2=X_test2, cell_test2=cell_test2,
+                                                                                                                                                                              X_test3=X_test3, cell_test3=cell_test3, X_test4=X_test4, cell_test4=cell_test4)
+
+            dts = '../results/{}'.format(self.experiment)
+            # save test cell predictions
+            np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_pred_te1)
+            np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_pred_te1_err)
+            np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_test1)
+            np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test2), y_pred_te2)
+            np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test2), y_pred_te2_err)
+            np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell_test2), y_test2)
+
+            np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test3), y_pred_te3)
+            np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test3), y_pred_te3_err)
+            np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell_test3), y_test3)
+
+            np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test4), y_pred_te4)
+            np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test4), y_pred_te4_err)
+            np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell_test4), y_test4)
+
+            r2s_tr.append(r2_score(y_train, y_pred_tr))
+            r2s_te.append(r2_score(y_test1, y_pred_te1))
+            r2s_te.append(r2_score(y_test2, y_pred_te2))
+            r2s_te.append(r2_score(y_test3, y_pred_te3))
+            r2s_te.append(r2_score(y_test4, y_pred_te4))
+            pes_tr.append(np.abs(y_train - y_pred_tr) / y_train)
+            pes_te.append(np.abs(y_test1 - y_pred_te1) / y_test1)
+            pes_te.append(np.abs(y_test2 - y_pred_te2) / y_test2)
+            pes_te.append(np.abs(y_test1 - y_pred_te3) / y_test3)
+            pes_te.append(np.abs(y_test2 - y_pred_te4) / y_test4)
+        r2_tr = np.median(np.array(r2s_tr))
+        r2_te = np.median(np.array(r2s_te))
+        pe_tr = 100*np.median(np.hstack(pes_tr).reshape(-1))
+        pe_te = 100*np.median(np.hstack(pes_te).reshape(-1))
+        print('Train R2:{}\t Train error: {}\t Test R2: {}\t Test error: {}'.format(r2_tr, pe_tr, r2_te, pe_te))
+        print(r2s_te)
+        print(pes_te)
+        with open(log_name, 'a+') as file:
+            file.write(experiment_info)
+            file.write('Train R2:{}\t Train error: {}\t Test R2: {}\t Test error: {}\n'.format(r2_tr, pe_tr, r2_te, pe_te))
         return
