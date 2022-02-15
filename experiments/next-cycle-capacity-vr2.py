@@ -23,10 +23,10 @@ input_names = ['actions', 'cvfs-actions', 'eis-actions', 'ecmer-actions', 'ecmr-
                'ecmr-cvfs-ct-c-actions', 'ecmer-cvfs-ct-c-actions', 'eis-cvfs-ct-c-actions']
 
 # Extract variable discharge data set
-#cell_var, cap_ds_var, data_var = extract_data_type2(experiment, channels)
+cell_var, cap_ds_var, data_var = extract_data_type2(experiment, channels)
 cell_var = np.load('cell_vd2.npy')
 cap_ds_var = np.load('cap_ds_vd2.npy')
-data_var = None
+#data_var = None
 
 #data = (last_caps, sohs, eis_ds, cvfs, ocvs, cap_throughputs, d_rates, c1_rates, c2_rates)
 #print('Number of datapoints = {}'.format(data_var[0].shape[0]))
