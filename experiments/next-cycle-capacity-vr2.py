@@ -1,3 +1,7 @@
+"""
+Variable discharge data (splitting into 4 batches with different distributions separated.)
+"""
+
 import sys
 sys.path.append('../')
 import time
@@ -15,7 +19,7 @@ params = {'max_depth':100,
           'n_splits':4,
           'n_estimators':500,
           'n_ensembles':10}
-log_name = '../results/{}/log-next-cycle-16.txt'.format(experiment)
+log_name = '../results/{}/log-next-cycle-scaffold.txt'.format(experiment)
 
 # Test model using different state representations
 input_names = ['actions', 'cvfs-actions', 'eis-actions', 'ecmer-actions', 'ecmr-actions', 'ecmer-cvfs-actions',
@@ -24,8 +28,8 @@ input_names = ['actions', 'cvfs-actions', 'eis-actions', 'ecmer-actions', 'ecmr-
 
 # Extract variable discharge data set
 cell_var, cap_ds_var, data_var = extract_data_type2(experiment, channels)
-cell_var = np.load('cell_vd2.npy')
-cap_ds_var = np.load('cap_ds_vd2.npy')
+#cell_var = np.load('cell_vd2.npy')
+#cap_ds_var = np.load('cap_ds_vd2.npy')
 #data_var = None
 
 #data = (last_caps, sohs, eis_ds, cvfs, ocvs, cap_throughputs, d_rates, c1_rates, c2_rates)

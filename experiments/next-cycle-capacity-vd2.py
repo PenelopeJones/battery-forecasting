@@ -16,10 +16,10 @@ experiment = 'variable-discharge-type2'
 channels = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8',
             'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8',]
 params = {'max_depth':100,
-          'n_splits':8,
+          'n_splits':16,
           'n_estimators':500,
           'n_ensembles':10}
-log_name = '../results/{}/log-next-cycle-random-split-16.txt'.format(experiment)
+log_name = '../results/{}/log-next-cycle-random-split-32.txt'.format(experiment)
 
 # Test model using different state representations
 input_names = ['actions', 'cvfs-actions', 'eis-actions', 'ecmer-actions', 'ecmr-actions', 'ecmer-cvfs-actions',

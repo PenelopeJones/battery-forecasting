@@ -90,13 +90,28 @@ class XGBModel:
         """
     def split_into_four(self):
 
-        # leave 4 cells out to test
-        cell_test1 = self.cell_idx[self.n_split*4]
-        cell_test2 = self.cell_idx[self.n_split*4 + 1]
-        cell_test3 = self.cell_idx[self.n_split*4 + 2]
-        cell_test4 = self.cell_idx[self.n_split*4 + 3]
-        print('Split {}: Test cells {} and {} and {} and {}'.format(self.n_split, cell_test1, cell_test2, cell_test3, cell_test4))
+        # leave 8 cells out to test.
+        split_map = {0:['PJ248', 'PJ249', 'PJ250', 'PJ251', 'PJ264', 'PJ265', 'PJ266', 'PJ267'],
+                     1:['PJ252', 'PJ253', 'PJ254', 'PJ255', 'PJ268', 'PJ269', 'PJ270', 'PJ271'],
+                     2:['PJ256', 'PJ257', 'PJ258', 'PJ259', 'PJ272', 'PJ273', 'PJ274', 'PJ275'],
+                     3:['PJ260', 'PJ261', 'PJ262', 'PJ263', 'PJ276', 'PJ277', 'PJ278', 'PJ279'],}
 
+        print('Split {}: Test cells'.format(self.n_split))
+        print(split_map[self.n_split])
+
+        idx_tests = []
+
+        for j, cell in enumerate(split_map(self.n_split)):
+            idx = np.array(np.where(self.cell_nos == cell)).reshape(-1)
+            idx_tests.append(idx)
+
+        idx_test = np.hstack(idx_tests).reshape(-1)
+        # identify training cell datapoints
+        idx_train = np.delete(np.arange(self.X.shape[0]), idx_test)
+
+        return idx_tests, idx_train, split_map[self.n_split]
+
+        """
         # identify test cell datapoints
         idx_test1 = np.array(np.where(self.cell_nos == cell_test1)).reshape(-1)
         idx_test2 = np.array(np.where(self.cell_nos == cell_test2)).reshape(-1)
@@ -104,8 +119,7 @@ class XGBModel:
         idx_test4 = np.array(np.where(self.cell_nos == cell_test4)).reshape(-1)
         idx_test = np.hstack([idx_test1, idx_test2, idx_test3, idx_test4]).reshape(-1)
 
-        # identify training cell datapoints
-        idx_train = np.delete(np.arange(self.X.shape[0]), idx_test)
+
 
         # return train and test datasets
         X_test1 = self.X[idx_test1, :]
@@ -120,6 +134,7 @@ class XGBModel:
         y_train = self.y[idx_train]
 
         return X_train, y_train, X_test1, y_test1, X_test2, y_test2, X_test3, y_test3, X_test4, y_test4, cell_test1, cell_test2, cell_test3, cell_test4
+        """
 
     def split_by_cell(self):
 
@@ -229,6 +244,57 @@ class XGBModel:
 
         return y_pred_tr.reshape(-1), y_pred_tr_err.reshape(-1), y_pred_te1.reshape(-1), y_pred_te1_err.reshape(-1), y_pred_te2.reshape(-1), y_pred_te2_err.reshape(-1), y_pred_te3, y_pred_te3_err, y_pred_te4, y_pred_te4_err
 
+    def train_and_predict_vd2(self, idx_train, idx_tests, cell_tests):
+
+
+        X_train = self.X[idx_train, :]
+        y_train = self.y[idx_train]
+
+        n_bootstrap = int(0.9*X_train.shape[0]) # fraction of training set to use to train each model in ensemble
+        states = self.n_ensembles*np.arange(1, self.n_ensembles + 1, 1) + self.n_split + self.start_seed
+        dts = '../results/{}'.format(self.experiment)
+
+        y_pred_trs = []
+        pred_tes = dict()
+
+        for j in len(cell_tests):
+            pred_tes[j] = []
+
+        for i, ensemble_state in enumerate(states):
+
+            # bootstrap from training set and train XGB model
+            np.random.seed(ensemble_state)
+            idx = np.random.permutation(X_train.shape[0])[0:n_bootstrap]
+            regr = xgb.XGBRegressor(max_depth=self.max_depth, n_estimators=self.n_estimators, random_state=ensemble_state+self.n_split)
+            regr.fit(X_train[idx], y_train[idx])
+
+            for j, cell in enumerate(cell_tests):
+                # save model
+                X_test = self.X[idx_tests[j]]
+                with open('{}/models/{}_{}_{}.pkl'.format(dts, self.experiment_name, i, cell), 'wb') as f:
+                    pickle.dump(regr, f)
+                pred = regr.predict(X_test)
+                pred_tes[j].append(pred.reshape(1, pred.shape[0], -1))
+
+            pred = regr.predict(X_train)
+            y_pred_trs.append(y_pred_tr.reshape(1, y_pred_tr.shape[0], -1))
+
+        # aggregate predictions from each model in ensemble
+        y_pred_trs = np.vstack(y_pred_trs)
+        y_pred_tr = np.mean(y_pred_trs, axis=0).reshape(-1)
+        y_pred_tr_err = np.sqrt(np.var(y_pred_trs, axis=0)).reshape(-1)
+
+        y_pred_tes = []
+        y_pred_te_errs = []
+
+        for j in range(len(cell_tests)):
+            y_pred_te = np.vstack(pred_tes[j])
+            y_pred_tes.append(np.mean(y_pred_te, axis=0))
+            y_pred_te_errs.append(np.sqrt(np.var(y_pred_te, axis=0)))
+
+
+        return y_pred_tr, y_pred_tr_err, y_pred_tes, y_pred_te_errs
+
     def analysis(self, log_name, experiment_info):
 
         r2s_tr = []
@@ -301,39 +367,25 @@ class XGBModel:
             self.n_split = n_split
 
             # split data: 2 test cells
-            X_train, y_train, X_test1, y_test1, X_test2, y_test2, X_test3, y_test3, X_test4, y_test4, cell_test1, cell_test2, cell_test3, cell_test4 = self.split_into_four()
+            idx_tests, idx_train, cells_test = self.split_into_four()
 
-            # train model and predict on train and test data
-            y_pred_tr, y_pred_tr_err, y_pred_te1, y_pred_te1_err, y_pred_te2, y_pred_te2_err, y_pred_te3, y_pred_te3_err, y_pred_te4, y_pred_te4_err = self.train_and_predict(X_train, y_train, X_test1, cell_test1=cell_test1, X_test2=X_test2, cell_test2=cell_test2,
-                                                                                                                                                                              X_test3=X_test3, cell_test3=cell_test3, X_test4=X_test4, cell_test4=cell_test4)
+            y_pred_tr, y_pred_tr_err, y_pred_tes, y_pred_te_errs = self.train_and_predict_vd2(idx_train, idx_tests, cells_test)
 
-            dts = '../results/{}'.format(self.experiment)
-            # save test cell predictions
-            np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_pred_te1)
-            np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_pred_te1_err)
-            np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell_test1), y_test1)
-            np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test2), y_pred_te2)
-            np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test2), y_pred_te2_err)
-            np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell_test2), y_test2)
-
-            np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test3), y_pred_te3)
-            np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test3), y_pred_te3_err)
-            np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell_test3), y_test3)
-
-            np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell_test4), y_pred_te4)
-            np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell_test4), y_pred_te4_err)
-            np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell_test4), y_test4)
-
+            y_train = self.y[idx_train]
             r2s_tr.append(r2_score(y_train, y_pred_tr))
-            r2s_te.append(r2_score(y_test1, y_pred_te1))
-            r2s_te.append(r2_score(y_test2, y_pred_te2))
-            r2s_te.append(r2_score(y_test3, y_pred_te3))
-            r2s_te.append(r2_score(y_test4, y_pred_te4))
             pes_tr.append(np.abs(y_train - y_pred_tr) / y_train)
-            pes_te.append(np.abs(y_test1 - y_pred_te1) / y_test1)
-            pes_te.append(np.abs(y_test2 - y_pred_te2) / y_test2)
-            pes_te.append(np.abs(y_test3 - y_pred_te3) / y_test3)
-            pes_te.append(np.abs(y_test4 - y_pred_te4) / y_test4)
+            dts = '../results/{}'.format(self.experiment)
+            for j, cell in enumerate(cells_test):
+                y_test = self.y[idx_tests[j]]
+                pred_test = y_pred_tes[j]
+                pred_test_err = y_pred_te_errs[j]
+                # save test cell predictions
+                np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell), pred_test[j])
+                np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell), pred_test_err[j])
+                np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell), y_test)
+                r2s_te.append(r2_score(y_test, pred_test))
+                pes_te.append(np.abs(y_test - pred_test) / y_test)
+
         r2_tr = np.median(np.array(r2s_tr))
         r2_te = np.median(np.array(r2s_te))
         pe_tr = 100*np.median(np.hstack(pes_tr).reshape(-1))
