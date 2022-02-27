@@ -257,7 +257,7 @@ class XGBModel:
         y_pred_trs = []
         pred_tes = dict()
 
-        for j in len(cell_tests):
+        for j in range(len(cell_tests)):
             pred_tes[j] = []
 
         for i, ensemble_state in enumerate(states):
