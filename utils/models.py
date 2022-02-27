@@ -277,7 +277,7 @@ class XGBModel:
                 pred_tes[j].append(pred.reshape(1, pred.shape[0], -1))
 
             pred = regr.predict(X_train)
-            y_pred_trs.append(y_pred_tr.reshape(1, y_pred_tr.shape[0], -1))
+            y_pred_trs.append(pred.reshape(1, pred.shape[0], -1))
 
         # aggregate predictions from each model in ensemble
         y_pred_trs = np.vstack(y_pred_trs)
