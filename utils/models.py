@@ -323,7 +323,7 @@ class XGBModel:
             r2s_tr.append(r2_score(y_train, y_pred_tr))
             r2s_te.append(r2_score(y_test1, y_pred_te1))
             r2s_te.append(r2_score(y_test2, y_pred_te2))
-            pes_tr.append(np.abs(y_train - y_pred_tr) / y_train)
+            pes_tr.append((np.abs(y_train - y_pred_tr) / y_train))
             pes_te.append(np.abs(y_test1 - y_pred_te1) / y_test1)
             pes_te.append(np.abs(y_test2 - y_pred_te2) / y_test2)
         r2_tr = np.median(np.array(r2s_tr))
@@ -384,7 +384,7 @@ class XGBModel:
                 np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell), pred_test_err[j])
                 np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell), y_test)
                 r2s_te.append(r2_score(y_test, pred_test))
-                pes_te.append(np.abs(y_test - pred_test) / y_test)
+                pes_te.append((np.abs(y_test - pred_test) / y_test).reshape(-1))
 
         r2_tr = np.median(np.array(r2s_tr))
         r2_te = np.median(np.array(r2s_te))
