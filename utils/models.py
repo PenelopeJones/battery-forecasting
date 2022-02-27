@@ -101,7 +101,7 @@ class XGBModel:
 
         idx_tests = []
 
-        for j, cell in enumerate(split_map(self.n_split)):
+        for j, cell in enumerate(split_map[self.n_split]):
             idx = np.array(np.where(self.cell_nos == cell)).reshape(-1)
             idx_tests.append(idx)
 
