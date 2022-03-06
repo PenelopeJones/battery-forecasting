@@ -348,7 +348,7 @@ class XGBModel:
             idx_tests, idx_train, cells_test = self.split_into_four()
 
             y_pred_tr, y_pred_tr_err, y_pred_tes, y_pred_te_errs = self.train_and_predict_vd2(idx_train, idx_tests, cells_test)
-            pdb.set_trace()
+
             y_train = self.y[idx_train]
             r2s_tr.append(r2_score(y_train, y_pred_tr))
             pes_tr.append(np.abs(y_train - y_pred_tr) / y_train)
@@ -358,8 +358,11 @@ class XGBModel:
                 pred_test = y_pred_tes[j]
                 pred_test_err = y_pred_te_errs[j]
                 # save test cell predictions
-                np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell), pred_test[j])
-                np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell), pred_test_err[j])
+                print(pred_test.shape)
+                print(y_test.shape)
+                print(pred_test_err.shape)
+                np.save('{}/predictions/pred_mn_{}_{}.npy'.format(dts, self.experiment_name, cell), pred_test)
+                np.save('{}/predictions/pred_std_{}_{}.npy'.format(dts, self.experiment_name, cell), pred_test_err)
                 np.save('{}/predictions/true_{}_{}.npy'.format(dts, self.experiment_name, cell), y_test)
                 r2s_te.append(r2_score(y_test, pred_test))
                 pes_te.append((np.abs(y_test - pred_test) / y_test).reshape(-1))
