@@ -111,31 +111,6 @@ class XGBModel:
 
         return idx_tests, idx_train, split_map[self.n_split]
 
-        """
-        # identify test cell datapoints
-        idx_test1 = np.array(np.where(self.cell_nos == cell_test1)).reshape(-1)
-        idx_test2 = np.array(np.where(self.cell_nos == cell_test2)).reshape(-1)
-        idx_test3 = np.array(np.where(self.cell_nos == cell_test3)).reshape(-1)
-        idx_test4 = np.array(np.where(self.cell_nos == cell_test4)).reshape(-1)
-        idx_test = np.hstack([idx_test1, idx_test2, idx_test3, idx_test4]).reshape(-1)
-
-
-
-        # return train and test datasets
-        X_test1 = self.X[idx_test1, :]
-        y_test1 = self.y[idx_test1]
-        X_test2 = self.X[idx_test2, :]
-        y_test2 = self.y[idx_test2]
-        X_test3 = self.X[idx_test3, :]
-        y_test3 = self.y[idx_test3]
-        X_test4 = self.X[idx_test4, :]
-        y_test4 = self.y[idx_test4]
-        X_train = self.X[idx_train, :]
-        y_train = self.y[idx_train]
-
-        return X_train, y_train, X_test1, y_test1, X_test2, y_test2, X_test3, y_test3, X_test4, y_test4, cell_test1, cell_test2, cell_test3, cell_test4
-        """
-
     def split_by_cell(self):
 
         # leave 2 cells out to test
@@ -246,9 +221,11 @@ class XGBModel:
 
     def train_and_predict_vd2(self, idx_train, idx_tests, cell_tests):
 
-
         X_train = self.X[idx_train, :]
         y_train = self.y[idx_train]
+
+        print(X_train.shape)
+        print(y_train.shape)
 
         n_bootstrap = int(0.9*X_train.shape[0]) # fraction of training set to use to train each model in ensemble
         states = self.n_ensembles*np.arange(1, self.n_ensembles + 1, 1) + self.n_split + self.start_seed
@@ -259,7 +236,7 @@ class XGBModel:
 
         for j in range(len(cell_tests)):
             pred_tes[j] = []
-
+        print(pred_tes)
         for i, ensemble_state in enumerate(states):
 
             # bootstrap from training set and train XGB model
@@ -271,9 +248,11 @@ class XGBModel:
             for j, cell in enumerate(cell_tests):
                 # save model
                 X_test = self.X[idx_tests[j]]
+                print(X_test.shape)
                 with open('{}/models/{}_{}_{}.pkl'.format(dts, self.experiment_name, i, cell), 'wb') as f:
                     pickle.dump(regr, f)
                 pred = regr.predict(X_test)
+                print(pred.shape)
                 pred_tes[j].append(pred.reshape(1, pred.shape[0], -1))
 
             pred = regr.predict(X_train)
@@ -289,9 +268,8 @@ class XGBModel:
 
         for j in range(len(cell_tests)):
             y_pred_te = np.vstack(pred_tes[j])
-            y_pred_tes.append(np.mean(y_pred_te, axis=0))
-            y_pred_te_errs.append(np.sqrt(np.var(y_pred_te, axis=0)))
-
+            y_pred_tes.append(np.mean(y_pred_te, axis=0).reshape(-1))
+            y_pred_te_errs.append(np.sqrt(np.var(y_pred_te, axis=0)).reshape(-1))
 
         return y_pred_tr, y_pred_tr_err, y_pred_tes, y_pred_te_errs
 
@@ -370,7 +348,7 @@ class XGBModel:
             idx_tests, idx_train, cells_test = self.split_into_four()
 
             y_pred_tr, y_pred_tr_err, y_pred_tes, y_pred_te_errs = self.train_and_predict_vd2(idx_train, idx_tests, cells_test)
-
+            pdb.set_trace()
             y_train = self.y[idx_train]
             r2s_tr.append(r2_score(y_train, y_pred_tr))
             pes_tr.append(np.abs(y_train - y_pred_tr) / y_train)
