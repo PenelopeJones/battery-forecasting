@@ -120,6 +120,25 @@ experiment_map = {'PJ097':'variable-discharge',
                   'PJ277':'variable-discharge-type2',
                   'PJ278':'variable-discharge-type2',
                   'PJ279':'variable-discharge-type2',
+                  'PJ279':'variable-discharge-type2',
+                  'PJ296':'vd2-35C',
+                  'PJ297':'vd2-35C',
+                  'PJ298':'vd2-35C',
+                  'PJ299':'vd2-35C',
+                  'PJ300':'vd2-35C',
+                  'PJ301':'vd2-35C',
+                  'PJ302':'vd2-35C',
+                  'PJ303':'vd2-35C',
+                  'PJ304':'vd2-35C',
+                  'PJ305':'vd2-35C',
+                  'PJ306':'vd2-35C',
+                  'PJ307':'vd2-35C',
+                  'PJ308':'vd2-35C',
+                  'PJ309':'vd2-35C',
+                  'PJ310':'vd2-35C',
+                  'PJ311':'vd2-35C',
+
+
                   }
 column_map = {
     'GCPL': ['time', 'ewe', 'i', 'capacity', 'power', 'ox/red', 'unnamed'],
@@ -1080,6 +1099,23 @@ def identify_cells(experiment):
                 'B6':['PJ261','PJ277',],
                 'B7':['PJ262','PJ278',],
                 'B8':['PJ263','PJ279',],}
+    elif experiment == 'vd2-35C':
+        cell_map = {'A1':['PJ296',],
+                'A2':['PJ297',],
+                'A3':['PJ298',],
+                'A4':['PJ299',],
+                'A5':['PJ300',],
+                'A6':['PJ301',],
+                'A7':['PJ302',],
+                'A8':['PJ303',],
+                'B1':['PJ304',],
+                'B2':['PJ305',],
+                'B3':['PJ306',],
+                'B4':['PJ307',],
+                'B5':['PJ308',],
+                'B6':['PJ309',],
+                'B7':['PJ310',],
+                'B8':['PJ311',],}
 
     elif experiment == 'both':
         cell_map = {'A1':['PJ097','PJ105', 'PJ121', 'PJ129', 'PJ145'],
@@ -1235,11 +1271,10 @@ def extract_n_step_data(experiment, channels):
 
     return data
 
-def ensemble_predict(x, experiment, input_name, n_ensembles=10):
+def ensemble_predict(x, exp_train, experiment_name, n_ensembles=10):
     y_preds = []
-    dts = '../results/{}'.format(experiment)
+    dts = '../results/{}'.format(exp_train)
     for i in range(n_ensembles):
-        experiment_name = '{}_n1_xgb'.format(input_name)
         with open('{}/models/{}_{}.pkl'.format(dts, experiment_name, i), 'rb') as f:
             regr = pickle.load(f)
             y_pred = regr.predict(x)
