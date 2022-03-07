@@ -921,6 +921,8 @@ def extract_input(input_name, data=None, suffix='15m'):
         actions = np.hstack([v_maxs.reshape(-1, 1), c1_rates.reshape(-1, 1)])
     elif suffix == 'vd2':
         actions = np.hstack([c1_rates.reshape(-1, 1), c2_rates.reshape(-1, 1), d_rates.reshape(-1, 1)])
+    elif suffix == 'vd2-35C':
+        actions = np.hstack([c1_rates.reshape(-1, 1), c2_rates.reshape(-1, 1), d_rates.reshape(-1, 1)])
     #actions = c1_rates.reshape(-1, 1)
 
     if input_name == 'eis-cvfs-ct-actions':
