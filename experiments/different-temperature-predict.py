@@ -15,7 +15,10 @@ input_name = 'eis-actions'
 exp_test = 'vd2-35C'
 exp_train = 'variable-discharge-type2'
 # Testing on fixed discharge data set
-cells, cap_ds, data = extract_data_type2(exp_test, channels, suffix='vd2-35C')
+#cells, cap_ds, data = extract_data_type2(exp_test, channels, suffix='vd2-35C')
+suffix = 'vd2-35C'
+cells = np.load('cell_{}.npy'.format(suffix))
+cap_ds  = np.load('cap_ds_{}.npy'.format(suffix))
 x = extract_input(input_name, data=None, suffix='vd2-35C')
 experiment_name = '{}_n1_xgb2'.format(input_name)
 pred, pred_err = ensemble_predict(x, exp_train, experiment_name)
