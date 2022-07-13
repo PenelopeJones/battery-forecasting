@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Jones"
+  given-names: "Penelope K."
+  orcid: "https://orcid.org/0000-0002-6264-312X"
+- family-names: "Lee"
+  given-names: "Alpha A."
+  orcid: "https://orcid.org/0000-0002-9616-3108"
+title: "Impedance based forecasting of battery performance under uneven future use."
+version: 1.0.1
+doi: 10.5281/zenodo.6828036
+date-released: 2022-07-13
+url: "https://github.com/PenelopeJones/battery-forecasting"
